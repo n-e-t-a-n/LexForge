@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexForge: Bar Study Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a2a3a;
+            --accent: #3498db;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --scenario-border: #dcdde1;
+            --question-highlight: #ebf5fb;
+            --answer-color: #27ae60;
+            --basis-color: #e67e22;
+            --app-color: #8e44ad;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.5;
+            color: var(--text-main);
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1150px;
+            margin: 0 auto;
+            padding: 50px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2.8rem;
+            margin-bottom: 5px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            font-weight: 400;
+        }
+
+        /* Upload Section */
+        .upload-zone {
+            background: var(--card-bg);
+            padding: 60px 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            text-align: center;
+            border: 2px dashed #bdc3c7;
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--accent);
+            background-color: #f7fbfe;
+            transform: scale(1.02);
+        }
+
+        .btn-upload {
+            background: var(--accent);
+            color: white;
+            padding: 14px 35px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: inline-block;
+            font-weight: 700;
+            transition: all 0.2s;
+            margin-top: 15px;
+        }
+
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        #searchBar {
+            flex-grow: 1;
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid #dcdde1;
+            font-size: 1rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 1px solid #dcdde1;
+            padding: 10px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: var(--accent);
+        }
+
+        /* Question Cards */
+        .question-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 35px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .q-tag {
+            font-size: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent);
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .label-heading {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #95a5a6;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .scenario-text {
+            font-size: 1.15rem;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            padding: 0 5px;
+        }
+
+        .question-highlight-box {
+            background-color: var(--question-highlight);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid var(--accent);
+            margin-bottom: 30px;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .btn-toggle {
+            width: 100%;
+            background: #fdfdfd;
+            border: 2px solid #f1f2f6;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .btn-toggle:hover {
+            background: #f1f2f6;
+            color: var(--primary);
+            border-color: #dfe6e9;
+        }
+
+        /* Answer Logic (ALA) */
+        .answer-box {
+            display: none;
+            margin-top: 35px;
+            padding-top: 35px;
+            border-top: 2px solid #f8f9fa;
+        }
+
+        .ala-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .ala-section {
+            padding-left: 15px;
+        }
+
+        .ala-title {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .title-a { color: var(--answer-color); }
+        .title-l { color: var(--basis-color); }
+        .title-app { color: var(--app-color); }
+
+        .ala-body {
+            font-size: 1.1rem;
+            color: #34495e;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            color: #bdc3c7;
+            font-size: 0.95rem;
+            padding-bottom: 40px;
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 600px) {
+            .container { padding: 20px 15px; }
+            h1 { font-size: 2rem; }
+            .question-card { padding: 25px; }
+            .question-text { font-size: 1.15rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>LexForge</h1>
+        <div class="subtitle">The Bar Readiness Engine</div>
+    </header>
+
+    <div class="upload-zone" id="dropZone">
+        <p style="font-size: 1.1rem; color: #7f8c8d; margin-bottom: 5px;">Ready to test your knowledge?</p>
+        <p style="font-size: 0.9rem; color: #bdc3c7; margin-bottom: 25px;">Drop your JSON file here or use the button below</p>
+        <input type="file" id="fileInput" accept=".json" style="display: none;">
+        <label for="fileInput" class="btn-upload">Select JSON File</label>
+    </div>
+
+    <div id="mainUI" class="hidden">
+        <div class="toolbar">
+            <input type="text" id="searchBar" placeholder="Search facts or keywords...">
+            <button class="btn-secondary" onclick="shuffleQuestions()">Shuffle Challenges</button>
+            <button class="btn-secondary" onclick="location.reload()">New Session</button>
+        </div>
+
+        <div id="content"></div>
+    </div>
+
+    <footer>
+        <p>LexForge &bull; Master the Law through Application</p>
+    </footer>
+</div>
+
+<script>
+    let currentData = [];
+    const fileInput = document.getElementById('fileInput');
+    const contentDiv = document.getElementById('content');
+    const dropZone = document.getElementById('dropZone');
+    const mainUI = document.getElementById('mainUI');
+    const searchBar = document.getElementById('searchBar');
+
+    // Drag and Drop Listeners
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.json')) {
+            processFile(file);
+        } else {
+            alert("Please drop a valid .json file.");
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) processFile(e.target.files[0]);
+    });
+
+    searchBar.addEventListener('input', () => renderQuestions(filterData(searchBar.value)));
+
+    function processFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                currentData = JSON.parse(e.target.result);
+                dropZone.classList.add('hidden');
+                mainUI.classList.remove('hidden');
+                renderQuestions(currentData);
+            } catch (err) {
+                alert("Error: File must be a valid JSON array.");
+                console.error(err);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function renderQuestions(data) {
+        contentDiv.innerHTML = '';
+        if (data.length === 0) {
+            contentDiv.innerHTML = '<div style="text-align:center; padding:40px; color:#95a5a6;">No results found for your search.</div>';
+            return;
+        }
+
+        data.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.innerHTML = `
+                <span class="q-tag">Challenge ${index + 1}</span>
+                
+                <span class="label-heading">Facts & Scenario</span>
+                <div class="scenario-text">${q.scenario}</div>
+                
+                <div class="question-highlight-box">
+                    <span class="label-heading" style="color: #3498db">Legal Question</span>
+                    <p class="question-text">${q.question}</p>
+                </div>
+
+                <button class="btn-toggle" onclick="toggleAnswer(this)">Show Suggested Answer</button>
+                
+                <div class="answer-box">
+                    <div class="ala-container">
+                        <div class="ala-section">
+                            <span class="ala-title title-a">Answer</span>
+                            <div class="ala-body"><strong>${q.answer}</strong></div>
+                        </div>
+                        <div class="ala-section">
+                            <span class="ala-title title-l">Legal Basis</span>
+                            <div class="ala-body">${q.legal_basis}</div>
+                        </div>
+                        <div class="ala-section">
+                            <span class="ala-title title-app">Application</span>
+                            <div class="ala-body">${q.application}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            contentDiv.appendChild(card);
+        });
+    }
+
+    function toggleAnswer(btn) {
+        const box = btn.nextElementSibling;
+        const isHidden = box.style.display === "none" || !box.style.display;
+        box.style.display = isHidden ? "block" : "none";
+        btn.textContent = isHidden ? "Hide Answer" : "Show Suggested Answer";
+        btn.style.borderColor = isHidden ? "#3498db" : "#f1f2f6";
+    }
+
+    function shuffleQuestions() {
+        currentData.sort(() => Math.random() - 0.5);
+        renderQuestions(currentData);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function filterData(keyword) {
+        const term = keyword.toLowerCase();
+        return currentData.filter(q => 
+            q.scenario.toLowerCase().includes(term) || 
+            q.question.toLowerCase().includes(term) ||
+            q.answer.toLowerCase().includes(term)
+        );
+    }
+</script>
+
+</body>
+</html>
