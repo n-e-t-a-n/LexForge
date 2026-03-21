@@ -3,6 +3,6 @@
 
 # Except for the core tool and documentation
 !README.md
-!Bar_Study_Tool.html
+!index.html
 !LLM_Generation_Instructions.md
 !.gitignore
