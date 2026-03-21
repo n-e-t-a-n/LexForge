@@ -1,0 +1,8 @@
+# Ignore everything
+*
+
+# Except for the core tool and documentation
+!README.md
+!Bar_Study_Tool.html
+!LLM_Generation_Instructions.md
+!.gitignore

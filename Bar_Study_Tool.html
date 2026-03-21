@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bar Study Tool (Dynamic)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f7f6;
+        }
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .data-input-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        #fileInput {
+            margin: 10px 0;
+        }
+        .question-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 5px solid #3498db;
+        }
+        .scenario {
+            font-style: italic;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        .question-text {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+        .btn-toggle {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+        .btn-toggle:hover {
+            background-color: #2980b9;
+        }
+        .answer-box {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #ddd;
+        }
+        .ala-label {
+            font-weight: bold;
+            color: #e67e22;
+            display: block;
+            margin-top: 10px;
+        }
+        .ala-content {
+            display: block;
+            margin-bottom: 10px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #777;
+            font-size: 0.9em;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Bar Study Tool</h1>
+    <p>Dynamic Q&A Viewer</p>
+</header>
+
+<div class="data-input-section" id="setup">
+    <h3>Upload Study Data</h3>
+    <p>Select your JSON study file to begin.</p>
+    <input type="file" id="fileInput" accept=".json">
+</div>
+
+<main id="content"></main>
+
+<footer id="footer" class="hidden">
+    <p>Keep grinding. Keep cramming!</p>
+</footer>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const contentDiv = document.getElementById('content');
+    const setupDiv = document.getElementById('setup');
+    const footer = document.getElementById('footer');
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                renderStudyPage(data);
+            } catch (err) {
+                alert("Error parsing JSON file. Please ensure it's a valid study JSON file.");
+                console.error(err);
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    function renderStudyPage(data) {
+        // Clear UI
+        contentDiv.innerHTML = '';
+        
+        // Show components
+        footer.classList.remove('hidden');
+        setupDiv.classList.add('hidden');
+
+        // Render Questions in a flat list
+        data.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.innerHTML = `
+                <div class="question-text">Question ${index + 1}</div>
+                <div class="scenario">Scenario: ${q.scenario}</div>
+                <div class="question-text">${q.question}</div>
+                <button class="btn-toggle" onclick="toggleAnswer(this)">Show Suggested Answer</button>
+                <div class="answer-box">
+                    <span class="ala-label">Answer:</span>
+                    <span class="ala-content">${q.answer}</span>
+                    <span class="ala-label">Legal Basis:</span>
+                    <span class="ala-content">${q.legal_basis}</span>
+                    <span class="ala-label">Application:</span>
+                    <span class="ala-content">${q.application}</span>
+                </div>
+            `;
+            contentDiv.appendChild(card);
+        });
+    }
+
+    function toggleAnswer(btn) {
+        const answerBox = btn.nextElementSibling;
+        if (answerBox.style.display === "block") {
+            answerBox.style.display = "none";
+            btn.textContent = "Show Suggested Answer";
+        } else {
+            answerBox.style.display = "block";
+            btn.textContent = "Hide Suggested Answer";
+        }
+    }
+</script>
+
+</body>
+</html>
