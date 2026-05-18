@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #1a2a3a;
@@ -95,16 +96,166 @@
         .toolbar {
             display: flex;
             gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .share-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--card-bg);
+            padding: 12px 18px;
+            border-radius: 12px;
             margin-bottom: 40px;
+            border: 1px solid #dcdde1;
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .share-bar .share-label {
+            font-weight: 700;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .share-bar code {
+            flex: 1 1 200px;
+            min-width: 0;
+            background: #f1f2f6;
+            padding: 8px 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: nowrap;
+            color: var(--primary);
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 700;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .toast.visible { opacity: 1; }
+        .toast.err { background: #c0392b; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(26, 42, 58, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.15s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        .modal {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            max-width: 500px;
+            width: 90%;
+            font-family: 'JetBrains Mono', monospace;
+            animation: popIn 0.2s ease-out;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title {
+            color: var(--primary);
+            font-size: 1.4rem;
+            margin: 0 0 10px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .modal-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0 0 25px;
+            line-height: 1.5;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 10px;
+            border: 1px solid #dcdde1;
+            font-size: 1rem;
+            font-family: inherit;
+            box-sizing: border-box;
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            transition: all 0.15s;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-actions .btn-secondary {
+            padding: 12px 22px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            padding: 12px 26px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(52, 152, 219, 0.35);
         }
 
         #searchBar {
-            flex-grow: 1;
+            flex: 1 1 200px;
+            min-width: 0;
             padding: 15px 25px;
             border-radius: 12px;
             border: 1px solid #dcdde1;
             font-size: 1rem;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            box-sizing: border-box;
         }
 
         .btn-secondary {
@@ -245,6 +396,27 @@
             h1 { font-size: 2rem; }
             .question-card { padding: 25px; }
             .question-text { font-size: 1.15rem; }
+
+            .toolbar { gap: 8px; }
+            #searchBar {
+                flex: 1 1 80px;
+                padding: 10px 14px;
+                font-size: 0.9rem;
+            }
+            .toolbar .btn-secondary {
+                padding: 10px 14px;
+                font-size: 0.85rem;
+            }
+            .hide-mobile { display: none; }
+
+            .share-bar { flex-direction: column; align-items: stretch; }
+            .share-bar code { width: 100%; box-sizing: border-box; flex: none; }
+            .share-bar .btn-secondary { width: 100%; }
+
+            .modal { padding: 28px 22px; }
+            .modal-actions { flex-direction: column-reverse; }
+            .modal-actions .btn-primary,
+            .modal-actions .btn-secondary { width: 100%; }
         }
     </style>
 </head>
@@ -266,11 +438,31 @@
     <div id="mainUI" class="hidden">
         <div class="toolbar">
             <input type="text" id="searchBar" placeholder="Search facts or keywords...">
-            <button class="btn-secondary" onclick="shuffleQuestions()">Shuffle Challenges</button>
-            <button class="btn-secondary" onclick="location.reload()">New Session</button>
+            <button class="btn-secondary" onclick="shuffleQuestions()">Shuffle<span class="hide-mobile">&nbsp;Challenges</span></button>
+            <button class="btn-secondary" onclick="window.location.href = window.location.pathname">New<span class="hide-mobile">&nbsp;Session</span></button>
+        </div>
+
+        <div id="shareBar" class="share-bar hidden">
+            <span class="share-label">Share link:</span>
+            <code id="shareLinkDisplay"></code>
+            <button id="copyShareBtn" class="btn-secondary" onclick="copyShareLink()">Copy</button>
         </div>
 
         <div id="content"></div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <div id="modalOverlay" class="modal-overlay hidden">
+        <div class="modal">
+            <h2 class="modal-title">Name this study set</h2>
+            <p class="modal-subtitle">Give it a recognizable name so others can find it via your share link. Cancel to keep this session private.</p>
+            <input type="text" id="modalInput" class="modal-input" placeholder="e.g. Title 7 Reviewer" autocomplete="off">
+            <div class="modal-actions">
+                <button class="btn-secondary" id="modalCancel" type="button">Keep Private</button>
+                <button class="btn-primary" id="modalConfirm" type="button">Save &amp; Share</button>
+            </div>
+        </div>
     </div>
 
     <footer>
@@ -279,12 +471,29 @@
 </div>
 
 <script>
+    // === Supabase config ===
+    // Fill these in from your Supabase project: Settings → API
+    const SUPABASE_URL      = 'https://dxxswzkumusbxncptevb.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4eHN3emt1bXVzYnhuY3B0ZXZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjkzNjUsImV4cCI6MjA5NDY0NTM2NX0.qowovEC-wB5dxKI7qPw_CQkv5yngdnPL1tg5YnX_0cA';
+
+    const sb = (SUPABASE_URL.startsWith('http') && window.supabase)
+        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        : null;
+    if (!sb) {
+        console.warn('Supabase not configured — share links disabled. Set SUPABASE_URL and SUPABASE_ANON_KEY in index.html.');
+    }
+
     let currentData = [];
+    let currentShareId = null;
+
     const fileInput = document.getElementById('fileInput');
     const contentDiv = document.getElementById('content');
     const dropZone = document.getElementById('dropZone');
     const mainUI = document.getElementById('mainUI');
     const searchBar = document.getElementById('searchBar');
+    const shareBar = document.getElementById('shareBar');
+    const shareLinkDisplay = document.getElementById('shareLinkDisplay');
+    const toastEl = document.getElementById('toast');
 
     // Drag and Drop Listeners
     dropZone.addEventListener('dragover', (e) => {
@@ -313,20 +522,181 @@
 
     searchBar.addEventListener('input', () => renderQuestions(filterData(searchBar.value)));
 
-    function processFile(file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                currentData = JSON.parse(e.target.result);
-                dropZone.classList.add('hidden');
-                mainUI.classList.remove('hidden');
-                renderQuestions(currentData);
-            } catch (err) {
-                alert("Error: File must be a valid JSON array.");
-                console.error(err);
+    async function sha256Hex(text) {
+        const buf = new TextEncoder().encode(text);
+        const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+        return Array.from(new Uint8Array(hashBuf))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+    }
+
+    function promptForName(defaultName) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('modalOverlay');
+            const input = document.getElementById('modalInput');
+            const confirmBtn = document.getElementById('modalConfirm');
+            const cancelBtn = document.getElementById('modalCancel');
+
+            input.value = defaultName || '';
+            overlay.classList.remove('hidden');
+            setTimeout(() => { input.focus(); input.select(); }, 50);
+
+            const cleanup = () => {
+                overlay.classList.add('hidden');
+                confirmBtn.removeEventListener('click', onConfirm);
+                cancelBtn.removeEventListener('click', onCancel);
+                input.removeEventListener('keydown', onKey);
+                overlay.removeEventListener('click', onOverlay);
+            };
+            const onConfirm = () => { const v = input.value; cleanup(); resolve(v); };
+            const onCancel = () => { cleanup(); resolve(null); };
+            const onKey = (e) => {
+                if (e.key === 'Enter') onConfirm();
+                else if (e.key === 'Escape') onCancel();
+            };
+            const onOverlay = (e) => { if (e.target === overlay) onCancel(); };
+
+            confirmBtn.addEventListener('click', onConfirm);
+            cancelBtn.addEventListener('click', onCancel);
+            input.addEventListener('keydown', onKey);
+            overlay.addEventListener('click', onOverlay);
+        });
+    }
+
+    function showToast(msg, isError) {
+        toastEl.textContent = msg;
+        toastEl.classList.toggle('err', !!isError);
+        toastEl.classList.add('visible');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => toastEl.classList.remove('visible'), 2500);
+    }
+
+    function setShareId(id) {
+        currentShareId = id;
+        const url = window.location.origin + window.location.pathname + '?id=' + id;
+        shareLinkDisplay.textContent = url;
+        shareBar.classList.remove('hidden');
+        const newUrl = new URL(window.location.href);
+        newUrl.search = '?id=' + id;
+        window.history.replaceState({}, '', newUrl);
+    }
+
+    function copyShareLink() {
+        if (!currentShareId) return;
+        const url = window.location.origin + window.location.pathname + '?id=' + currentShareId;
+        navigator.clipboard.writeText(url).then(
+            () => showToast('Link copied'),
+            () => showToast('Copy failed — select the link manually', true)
+        );
+    }
+    window.copyShareLink = copyShareLink;
+
+    async function loadSharedSet(id) {
+        if (!sb) {
+            alert("This share link can't be opened — Supabase isn't configured in this build.");
+            return;
+        }
+        const { data, error } = await sb.rpc('get_study_set', { p_id: id });
+        if (error) {
+            alert('Could not load shared set: ' + error.message);
+            return;
+        }
+        if (!data || data.length === 0) {
+            alert('No study set found for this link.');
+            return;
+        }
+        const row = data[0];
+        currentData = row.data;
+        dropZone.classList.add('hidden');
+        mainUI.classList.remove('hidden');
+        setShareId(row.id);
+        renderQuestions(currentData);
+    }
+
+    async function processFile(file) {
+        let text;
+        try {
+            text = await file.text();
+        } catch (err) {
+            alert('Could not read file.');
+            return;
+        }
+
+        let parsed;
+        try {
+            parsed = JSON.parse(text);
+        } catch (err) {
+            alert('Error: File must be valid JSON.');
+            console.error(err);
+            return;
+        }
+        if (!Array.isArray(parsed)) {
+            alert('Error: JSON root must be an array.');
+            return;
+        }
+
+        currentData = parsed;
+        dropZone.classList.add('hidden');
+        mainUI.classList.remove('hidden');
+        renderQuestions(currentData);
+
+        if (!sb) return;  // upload/share disabled; local-only session
+
+        // Hash the contents and check if this file is already in the library.
+        let hash;
+        try {
+            hash = await sha256Hex(text);
+        } catch (err) {
+            console.error(err);
+            showToast('Could not hash file', true);
+            return;
+        }
+
+        const { data: existing, error: lookupErr } = await sb.rpc('lookup_by_hash', { p_hash: hash });
+        if (lookupErr) {
+            showToast('Lookup failed: ' + lookupErr.message, true);
+            return;
+        }
+        if (existing && existing.length > 0) {
+            // Already in the DB — skip the prompt and the upload, just surface the link.
+            setShareId(existing[0].id);
+            showToast('Already in library — share link ready');
+            return;
+        }
+
+        // New file — ask for a name, then upload.
+        const defaultName = file.name.replace(/\.json$/i, '');
+        const name = await promptForName(defaultName);
+        if (name === null) return;  // user cancelled — keep local-only
+        const trimmed = name.trim();
+        if (!trimmed) {
+            showToast('Name was empty — kept private', true);
+            return;
+        }
+
+        try {
+            const { data: id, error } = await sb.rpc('upload_study_set', {
+                p_hash: hash,
+                p_name: trimmed,
+                p_data: parsed,
+            });
+            if (error) {
+                showToast(error.message, true);
+                return;
             }
-        };
-        reader.readAsText(file);
+            setShareId(id);
+            showToast('Saved — share link ready');
+        } catch (err) {
+            console.error(err);
+            showToast('Upload failed: ' + err.message, true);
+        }
+    }
+
+    // Auto-load shared set if URL has ?id=
+    {
+        const params = new URLSearchParams(window.location.search);
+        const shareId = params.get('id');
+        if (shareId) loadSharedSet(shareId);
     }
 
     function renderQuestions(data) {
