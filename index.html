@@ -392,10 +392,50 @@
 
         .hidden { display: none !important; }
 
+        /* Loading skeletons (shown while fetching a shared set from the DB) */
+        @keyframes shimmer {
+            0%   { background-position: -200% 0; }
+            100% { background-position:  200% 0; }
+        }
+
+        .skeleton-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 35px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .skeleton-block {
+            display: block;
+            background: linear-gradient(90deg, #e9ecef 0%, #f4f6f8 50%, #e9ecef 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s linear infinite;
+            border-radius: 6px;
+        }
+
+        .skeleton-tag    { width: 90px;  height: 12px; margin-bottom: 24px; }
+        .skeleton-line   { height: 14px; margin-bottom: 10px; }
+        .skeleton-line.w-100 { width: 100%; }
+        .skeleton-line.w-95  { width: 95%;  }
+        .skeleton-line.w-70  { width: 70%;  }
+        .skeleton-button { height: 50px; margin-top: 18px; border-radius: 12px; }
+
+        .skeleton-question {
+            height: 80px;
+            margin: 28px 0;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #dfeaf5 0%, #ebf5fb 50%, #dfeaf5 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s linear infinite;
+        }
+
         @media (max-width: 600px) {
             .container { padding: 20px 15px; }
             h1 { font-size: 2rem; }
             .question-card { padding: 25px; }
+            .skeleton-card { padding: 25px; }
             .question-text { font-size: 1.15rem; }
 
             .toolbar { gap: 8px; }
@@ -592,24 +632,48 @@
     }
     window.copyShareLink = copyShareLink;
 
+    function showSkeletons(count) {
+        contentDiv.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+            const card = document.createElement('div');
+            card.className = 'skeleton-card';
+            card.innerHTML = `
+                <span class="skeleton-block skeleton-tag"></span>
+                <span class="skeleton-block skeleton-line w-100"></span>
+                <span class="skeleton-block skeleton-line w-95"></span>
+                <span class="skeleton-block skeleton-line w-70"></span>
+                <div class="skeleton-question"></div>
+                <span class="skeleton-block skeleton-button"></span>
+            `;
+            contentDiv.appendChild(card);
+        }
+    }
+
+    function restoreUploadZone() {
+        contentDiv.innerHTML = '';
+        mainUI.classList.add('hidden');
+        dropZone.classList.remove('hidden');
+    }
+
     async function loadSharedSet(id) {
         if (!sb) {
             alert("This share link can't be opened — Supabase isn't configured in this build.");
+            restoreUploadZone();
             return;
         }
         const { data, error } = await sb.rpc('get_study_set', { p_id: id });
         if (error) {
             alert('Could not load shared set: ' + error.message);
+            restoreUploadZone();
             return;
         }
         if (!data || data.length === 0) {
             alert('No study set found for this link.');
+            restoreUploadZone();
             return;
         }
         const row = data[0];
         currentData = row.data;
-        dropZone.classList.add('hidden');
-        mainUI.classList.remove('hidden');
         setShareId(row.id);
         renderQuestions(currentData);
     }
@@ -697,7 +761,12 @@
     {
         const params = new URLSearchParams(window.location.search);
         const shareId = params.get('id');
-        if (shareId) loadSharedSet(shareId);
+        if (shareId) {
+            dropZone.classList.add('hidden');
+            mainUI.classList.remove('hidden');
+            showSkeletons(3);
+            loadSharedSet(shareId);
+        }
     }
 
     function renderQuestions(data) {
