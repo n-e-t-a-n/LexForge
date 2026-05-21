@@ -42,6 +42,35 @@
         header {
             text-align: center;
             margin-bottom: 60px;
+            position: relative;
+        }
+
+        .top-nav {
+            display: flex;
+            justify-content: center;
+            gap: 22px;
+            margin-top: 18px;
+            font-size: 0.9rem;
+        }
+
+        .top-nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 8px;
+            transition: all 0.15s;
+            letter-spacing: 0.3px;
+        }
+
+        .top-nav a:hover {
+            color: var(--primary);
+            background: rgba(52, 152, 219, 0.08);
+        }
+
+        .top-nav a.active {
+            color: var(--accent);
+            background: rgba(52, 152, 219, 0.12);
         }
 
         h1 {
@@ -431,12 +460,130 @@
             animation: shimmer 1.4s linear infinite;
         }
 
+        .skeleton-card.lib {
+            padding: 24px;
+            margin-bottom: 14px;
+            border-radius: 16px;
+        }
+
+        /* Library view */
+        .library-toolbar {
+            margin-bottom: 22px;
+        }
+
+        .library-toolbar #librarySearch {
+            width: 100%;
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid #dcdde1;
+            font-size: 1rem;
+            font-family: inherit;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            box-sizing: border-box;
+        }
+
+        .library-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 22px 26px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.03);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .library-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+            border-color: rgba(52, 152, 219, 0.25);
+        }
+
+        .library-card .lib-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .library-card .lib-name {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .library-card .lib-copy {
+            flex: none;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .library-card .lib-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            letter-spacing: 0.2px;
+        }
+
+        .library-card .lib-count {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .library-empty {
+            text-align: center;
+            padding: 60px 30px;
+            color: var(--text-muted);
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px dashed #dcdde1;
+        }
+
+        .library-empty a {
+            color: var(--accent);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .browse-library-link {
+            margin-top: 18px;
+            font-size: 0.85rem;
+            color: #95a5a6;
+        }
+
+        .browse-library-link a {
+            color: var(--accent);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .browse-library-link a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 600px) {
             .container { padding: 20px 15px; }
             h1 { font-size: 2rem; }
             .question-card { padding: 25px; }
             .skeleton-card { padding: 25px; }
+            .skeleton-card.lib { padding: 18px; }
             .question-text { font-size: 1.15rem; }
+
+            .library-card { padding: 18px 20px; }
+            .library-card .lib-top { flex-direction: column; align-items: stretch; }
+            .library-card .lib-copy { width: 100%; }
+            .library-card .lib-name { white-space: normal; }
+            .top-nav { gap: 8px; }
+            .top-nav a { padding: 6px 10px; font-size: 0.85rem; }
 
             .toolbar { gap: 8px; }
             #searchBar {
@@ -467,6 +614,10 @@
     <header>
         <h1>LexForge</h1>
         <div class="subtitle">The Bar Readiness Engine</div>
+        <nav class="top-nav" id="topNav">
+            <a href="?" id="navHome">Home</a>
+            <a href="?library=1" id="navLibrary">Library</a>
+        </nav>
     </header>
 
     <div class="upload-zone" id="dropZone">
@@ -474,6 +625,14 @@
         <p style="font-size: 0.9rem; color: #bdc3c7; margin-bottom: 25px;">Drop your JSON file here or use the button below</p>
         <input type="file" id="fileInput" accept=".json" style="display: none;">
         <label for="fileInput" class="btn-upload">Select JSON File</label>
+        <p class="browse-library-link">or <a href="?library=1">browse the public library</a></p>
+    </div>
+
+    <div id="libraryUI" class="hidden">
+        <div class="library-toolbar">
+            <input type="text" id="librarySearch" placeholder="Search library by name...">
+        </div>
+        <div id="libraryList"></div>
     </div>
 
     <div id="mainUI" class="hidden">
@@ -497,7 +656,7 @@
     <div id="modalOverlay" class="modal-overlay hidden">
         <div class="modal">
             <h2 class="modal-title">Name this study set</h2>
-            <p class="modal-subtitle">Give it a recognizable name so others can find it via your share link. Cancel to keep this session private.</p>
+            <p class="modal-subtitle">Saved sets appear in the public Library and via the share link. Cancel to keep this session local-only.</p>
             <input type="text" id="modalInput" class="modal-input" placeholder="e.g. Title 7 Reviewer" autocomplete="off">
             <div class="modal-actions">
                 <button class="btn-secondary" id="modalCancel" type="button">Keep Private</button>
@@ -531,10 +690,17 @@
     const contentDiv = document.getElementById('content');
     const dropZone = document.getElementById('dropZone');
     const mainUI = document.getElementById('mainUI');
+    const libraryUI = document.getElementById('libraryUI');
+    const libraryList = document.getElementById('libraryList');
+    const librarySearch = document.getElementById('librarySearch');
+    const navHome = document.getElementById('navHome');
+    const navLibrary = document.getElementById('navLibrary');
     const searchBar = document.getElementById('searchBar');
     const shareBar = document.getElementById('shareBar');
     const shareLinkDisplay = document.getElementById('shareLinkDisplay');
     const toastEl = document.getElementById('toast');
+
+    let libraryRows = [];
 
     // Drag and Drop Listeners
     dropZone.addEventListener('dragover', (e) => {
@@ -562,6 +728,14 @@
     });
 
     searchBar.addEventListener('input', () => renderQuestions(filterData(searchBar.value)));
+
+    librarySearch.addEventListener('input', () => {
+        const term = librarySearch.value.trim().toLowerCase();
+        const filtered = term
+            ? libraryRows.filter(r => (r.name || '').toLowerCase().includes(term))
+            : libraryRows;
+        renderLibraryList(filtered);
+    });
 
     async function sha256Hex(text) {
         const buf = new TextEncoder().encode(text);
@@ -652,7 +826,119 @@
     function restoreUploadZone() {
         contentDiv.innerHTML = '';
         mainUI.classList.add('hidden');
+        libraryUI.classList.add('hidden');
         dropZone.classList.remove('hidden');
+    }
+
+    function showLibrarySkeletons(count) {
+        libraryList.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+            const card = document.createElement('div');
+            card.className = 'skeleton-card lib';
+            card.innerHTML = `
+                <span class="skeleton-block skeleton-line w-70" style="height:18px;margin-bottom:14px;"></span>
+                <span class="skeleton-block skeleton-line w-95" style="height:12px;"></span>
+            `;
+            libraryList.appendChild(card);
+        }
+    }
+
+    function relativeTime(iso) {
+        if (!iso) return '';
+        const then = new Date(iso).getTime();
+        if (isNaN(then)) return '';
+        const diffSec = Math.max(0, Math.round((Date.now() - then) / 1000));
+        if (diffSec < 60)    return 'just now';
+        if (diffSec < 3600)  return Math.floor(diffSec / 60)   + ' minutes ago';
+        if (diffSec < 86400) return Math.floor(diffSec / 3600) + ' hours ago';
+        const days = Math.floor(diffSec / 86400);
+        if (days < 7)   return days + (days === 1 ? ' day ago' : ' days ago');
+        if (days < 30)  return Math.floor(days / 7)  + ' weeks ago';
+        if (days < 365) return Math.floor(days / 30) + ' months ago';
+        return Math.floor(days / 365) + ' years ago';
+    }
+
+    function escapeHtml(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => ({
+            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+        }[c]));
+    }
+
+    function renderLibraryEmpty(msg, linkText, linkHref) {
+        libraryList.innerHTML = `
+            <div class="library-empty">
+                <p>${escapeHtml(msg)}</p>
+                ${linkText ? `<p><a href="${linkHref}">${escapeHtml(linkText)}</a></p>` : ''}
+            </div>
+        `;
+    }
+
+    function renderLibraryList(rows) {
+        libraryList.innerHTML = '';
+        if (!rows || rows.length === 0) {
+            renderLibraryEmpty('No matches.', '', '');
+            return;
+        }
+        rows.forEach(row => {
+            const card = document.createElement('div');
+            card.className = 'library-card';
+            const count = row.question_count ?? 0;
+            const countLabel = count === 1 ? '1 challenge' : count + ' challenges';
+            card.innerHTML = `
+                <div class="lib-top">
+                    <h3 class="lib-name">${escapeHtml(row.name)}</h3>
+                    <button class="btn-secondary lib-copy" type="button">Copy share link</button>
+                </div>
+                <div class="lib-meta">
+                    <span class="lib-count">${escapeHtml(countLabel)}</span>
+                    &nbsp;&middot;&nbsp; uploaded ${escapeHtml(relativeTime(row.created_at))}
+                </div>
+            `;
+            card.addEventListener('click', () => {
+                window.location.href = window.location.pathname + '?id=' + encodeURIComponent(row.id);
+            });
+            const copyBtn = card.querySelector('.lib-copy');
+            copyBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const url = window.location.origin + window.location.pathname + '?id=' + row.id;
+                navigator.clipboard.writeText(url).then(
+                    () => showToast('Link copied'),
+                    () => showToast('Copy failed', true)
+                );
+            });
+            libraryList.appendChild(card);
+        });
+    }
+
+    async function loadLibrary() {
+        if (!sb) {
+            renderLibraryEmpty(
+                "Library unavailable — Supabase isn't configured in this build.",
+                'Back to upload',
+                '?'
+            );
+            return;
+        }
+        showLibrarySkeletons(6);
+        const { data, error } = await sb.rpc('list_study_sets');
+        if (error) {
+            renderLibraryEmpty(
+                'Could not load library: ' + error.message,
+                'Retry',
+                '?library=1'
+            );
+            return;
+        }
+        if (!data || data.length === 0) {
+            renderLibraryEmpty(
+                'No study sets uploaded yet.',
+                'Upload one',
+                '?'
+            );
+            return;
+        }
+        libraryRows = data;
+        renderLibraryList(libraryRows);
     }
 
     async function loadSharedSet(id) {
@@ -757,15 +1043,25 @@
         }
     }
 
-    // Auto-load shared set if URL has ?id=
+    // Route on URL params: ?id=X → shared set, ?library=1 → library, else → upload
     {
         const params = new URLSearchParams(window.location.search);
         const shareId = params.get('id');
+        const showLibrary = params.get('library') === '1';
         if (shareId) {
             dropZone.classList.add('hidden');
             mainUI.classList.remove('hidden');
+            navHome.classList.remove('active');
             showSkeletons(3);
             loadSharedSet(shareId);
+        } else if (showLibrary) {
+            dropZone.classList.add('hidden');
+            mainUI.classList.add('hidden');
+            libraryUI.classList.remove('hidden');
+            navLibrary.classList.add('active');
+            loadLibrary();
+        } else {
+            navHome.classList.add('active');
         }
     }
 
