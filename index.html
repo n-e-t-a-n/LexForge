@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function() {
+            try {
+                var stored = localStorage.getItem('lexforge-theme');
+                var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.dataset.theme = theme;
+            } catch (e) {}
+        })();
+    </script>
     <title>LexForge: Bar Study Tool</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='white'><g transform='rotate(-40 32 32)'><rect x='6' y='28' width='34' height='8' rx='2'/><rect x='34' y='20' width='22' height='24' rx='3'/></g></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,6 +31,40 @@
             --answer-color: #27ae60;
             --basis-color: #e67e22;
             --app-color: #8e44ad;
+            --panel-bg: #f8f9fa;
+            --panel-border: #dfe6e9;
+            --hover-bg: #f7fbfe;
+            --modal-scrim: rgba(26, 42, 58, 0.55);
+            --shimmer-base: #e9ecef;
+            --shimmer-highlight: #f4f6f8;
+            --shimmer-blue-base: #dfeaf5;
+            --shimmer-blue-highlight: #ebf5fb;
+            --toast-bg: #1a2a3a;
+            --toast-text: #ffffff;
+        }
+
+        html[data-theme="dark"] {
+            --primary: #eef2f7;
+            --accent: #4ea8e0;
+            --bg: #0e1722;
+            --card-bg: #172435;
+            --text-main: #e6ebf2;
+            --text-muted: #9aa5b3;
+            --scenario-border: #2a3a4f;
+            --question-highlight: #1c2d44;
+            --answer-color: #2ecc71;
+            --basis-color: #f39c12;
+            --app-color: #a569bd;
+            --panel-bg: #10192a;
+            --panel-border: #26354a;
+            --hover-bg: rgba(78, 168, 224, 0.10);
+            --modal-scrim: rgba(0, 0, 0, 0.7);
+            --shimmer-base: #1f2d40;
+            --shimmer-highlight: #293a52;
+            --shimmer-blue-base: #162539;
+            --shimmer-blue-highlight: #22344d;
+            --toast-bg: #2a3a4f;
+            --toast-text: #ffffff;
         }
 
         body {
@@ -31,6 +74,7 @@
             background-color: var(--bg);
             margin: 0;
             padding: 0;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
 
         .container {
@@ -73,6 +117,37 @@
             background: rgba(52, 152, 219, 0.12);
         }
 
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 32px;
+            padding: 0;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .theme-toggle:hover {
+            color: var(--accent);
+            background: rgba(52, 152, 219, 0.10);
+        }
+
+        .theme-toggle svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
+
+        html[data-theme="dark"] .theme-toggle .icon-moon,
+        html:not([data-theme="dark"]) .theme-toggle .icon-sun {
+            display: none;
+        }
+
         h1 {
             color: var(--primary);
             font-size: 2.8rem;
@@ -94,14 +169,14 @@
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             text-align: center;
-            border: 2px dashed #bdc3c7;
+            border: 2px dashed var(--panel-border);
             margin-bottom: 40px;
             transition: all 0.3s ease;
         }
 
         .upload-zone.dragover {
             border-color: var(--accent);
-            background-color: #f7fbfe;
+            background-color: var(--hover-bg);
             transform: scale(1.02);
         }
 
@@ -138,7 +213,7 @@
             padding: 12px 18px;
             border-radius: 12px;
             margin-bottom: 40px;
-            border: 1px solid #dcdde1;
+            border: 1px solid var(--scenario-border);
             font-size: 0.9rem;
             flex-wrap: wrap;
         }
@@ -152,7 +227,7 @@
         .share-bar code {
             flex: 1 1 200px;
             min-width: 0;
-            background: #f1f2f6;
+            background: var(--panel-bg);
             padding: 8px 12px;
             border-radius: 6px;
             overflow-x: auto;
@@ -165,8 +240,8 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--primary);
-            color: white;
+            background: var(--toast-bg);
+            color: var(--toast-text);
             padding: 12px 24px;
             border-radius: 10px;
             font-weight: 700;
@@ -184,7 +259,7 @@
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(26, 42, 58, 0.55);
+            background: var(--modal-scrim);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -233,19 +308,20 @@
             width: 100%;
             padding: 14px 18px;
             border-radius: 10px;
-            border: 1px solid #dcdde1;
+            border: 1px solid var(--scenario-border);
             font-size: 1rem;
             font-family: inherit;
             box-sizing: border-box;
             margin-bottom: 25px;
-            background: #f8f9fa;
+            background: var(--panel-bg);
+            color: var(--text-main);
             transition: all 0.15s;
         }
 
         .modal-input:focus {
             outline: none;
             border-color: var(--accent);
-            background: white;
+            background: var(--card-bg);
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
         }
 
@@ -282,15 +358,17 @@
             min-width: 0;
             padding: 15px 25px;
             border-radius: 12px;
-            border: 1px solid #dcdde1;
+            border: 1px solid var(--scenario-border);
             font-size: 1rem;
+            background: var(--card-bg);
+            color: var(--text-main);
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
             box-sizing: border-box;
         }
 
         .btn-secondary {
-            background: white;
-            border: 1px solid #dcdde1;
+            background: var(--card-bg);
+            border: 1px solid var(--scenario-border);
             padding: 10px 25px;
             border-radius: 12px;
             cursor: pointer;
@@ -300,7 +378,7 @@
         }
 
         .btn-secondary:hover {
-            background: #f8f9fa;
+            background: var(--panel-bg);
             border-color: var(--accent);
         }
 
@@ -328,14 +406,14 @@
             display: block;
             font-size: 0.8rem;
             font-weight: 800;
-            color: #95a5a6;
+            color: var(--text-muted);
             margin-bottom: 8px;
             text-transform: uppercase;
         }
 
         .scenario-text {
             font-size: 1.15rem;
-            color: #2c3e50;
+            color: var(--text-main);
             margin-bottom: 30px;
             padding: 0 5px;
         }
@@ -358,8 +436,8 @@
 
         .btn-toggle {
             width: 100%;
-            background: #fdfdfd;
-            border: 2px solid #f1f2f6;
+            background: var(--card-bg);
+            border: 2px solid var(--panel-bg);
             padding: 15px;
             border-radius: 12px;
             font-weight: 700;
@@ -370,9 +448,9 @@
         }
 
         .btn-toggle:hover {
-            background: #f1f2f6;
+            background: var(--panel-bg);
             color: var(--primary);
-            border-color: #dfe6e9;
+            border-color: var(--panel-border);
         }
 
         /* Answer Logic (ALA) */
@@ -380,7 +458,7 @@
             display: none;
             margin-top: 35px;
             padding-top: 35px;
-            border-top: 2px solid #f8f9fa;
+            border-top: 2px solid var(--panel-bg);
         }
 
         .ala-container {
@@ -408,13 +486,13 @@
 
         .ala-body {
             font-size: 1.1rem;
-            color: #34495e;
+            color: var(--text-main);
         }
 
         footer {
             text-align: center;
             margin-top: 80px;
-            color: #bdc3c7;
+            color: var(--text-muted);
             font-size: 0.95rem;
             padding-bottom: 40px;
         }
@@ -438,7 +516,7 @@
 
         .skeleton-block {
             display: block;
-            background: linear-gradient(90deg, #e9ecef 0%, #f4f6f8 50%, #e9ecef 100%);
+            background: linear-gradient(90deg, var(--shimmer-base) 0%, var(--shimmer-highlight) 50%, var(--shimmer-base) 100%);
             background-size: 200% 100%;
             animation: shimmer 1.4s linear infinite;
             border-radius: 6px;
@@ -455,7 +533,7 @@
             height: 80px;
             margin: 28px 0;
             border-radius: 12px;
-            background: linear-gradient(90deg, #dfeaf5 0%, #ebf5fb 50%, #dfeaf5 100%);
+            background: linear-gradient(90deg, var(--shimmer-blue-base) 0%, var(--shimmer-blue-highlight) 50%, var(--shimmer-blue-base) 100%);
             background-size: 200% 100%;
             animation: shimmer 1.4s linear infinite;
         }
@@ -475,9 +553,11 @@
             width: 100%;
             padding: 15px 25px;
             border-radius: 12px;
-            border: 1px solid #dcdde1;
+            border: 1px solid var(--scenario-border);
             font-size: 1rem;
             font-family: inherit;
+            background: var(--card-bg);
+            color: var(--text-main);
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
             box-sizing: border-box;
         }
@@ -545,7 +625,7 @@
             color: var(--text-muted);
             background: var(--card-bg);
             border-radius: 16px;
-            border: 1px dashed #dcdde1;
+            border: 1px dashed var(--panel-border);
         }
 
         .library-empty a {
@@ -557,7 +637,7 @@
         .browse-library-link {
             margin-top: 18px;
             font-size: 0.85rem;
-            color: #95a5a6;
+            color: var(--text-muted);
         }
 
         .browse-library-link a {
@@ -617,12 +697,21 @@
         <nav class="top-nav" id="topNav">
             <a href="?" id="navHome">Home</a>
             <a href="?library=1" id="navLibrary">Library</a>
+            <button type="button" id="themeToggle" class="theme-toggle" aria-label="Switch to dark mode" title="Switch to dark mode">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+                </svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
         </nav>
     </header>
 
     <div class="upload-zone" id="dropZone">
-        <p style="font-size: 1.1rem; color: #7f8c8d; margin-bottom: 5px;">Ready to test your knowledge?</p>
-        <p style="font-size: 0.9rem; color: #bdc3c7; margin-bottom: 25px;">Drop your JSON file here or use the button below</p>
+        <p style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 5px;">Ready to test your knowledge?</p>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 25px;">Drop your JSON file here or use the button below</p>
         <input type="file" id="fileInput" accept=".json" style="display: none;">
         <label for="fileInput" class="btn-upload">Select JSON File</label>
         <p class="browse-library-link">or <a href="?library=1">browse the public library</a></p>
@@ -695,12 +784,36 @@
     const librarySearch = document.getElementById('librarySearch');
     const navHome = document.getElementById('navHome');
     const navLibrary = document.getElementById('navLibrary');
+    const themeToggle = document.getElementById('themeToggle');
     const searchBar = document.getElementById('searchBar');
     const shareBar = document.getElementById('shareBar');
     const shareLinkDisplay = document.getElementById('shareLinkDisplay');
     const toastEl = document.getElementById('toast');
 
     let libraryRows = [];
+
+    // Theme toggle: sync ARIA + persist user choice; follow OS only until user picks.
+    const THEME_KEY = 'lexforge-theme';
+
+    function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        const next = theme === 'dark' ? 'light' : 'dark';
+        themeToggle.setAttribute('aria-label', 'Switch to ' + next + ' mode');
+        themeToggle.setAttribute('title', 'Switch to ' + next + ' mode');
+    }
+    applyTheme(document.documentElement.dataset.theme || 'light');
+
+    themeToggle.addEventListener('click', () => {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+        applyTheme(next);
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        let stored = null;
+        try { stored = localStorage.getItem(THEME_KEY); } catch (err) {}
+        if (!stored) applyTheme(e.matches ? 'dark' : 'light');
+    });
 
     // Drag and Drop Listeners
     dropZone.addEventListener('dragover', (e) => {
@@ -1068,7 +1181,7 @@
     function renderQuestions(data) {
         contentDiv.innerHTML = '';
         if (data.length === 0) {
-            contentDiv.innerHTML = '<div style="text-align:center; padding:40px; color:#95a5a6;">No results found for your search.</div>';
+            contentDiv.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No results found for your search.</div>';
             return;
         }
 
@@ -1082,7 +1195,7 @@
                 <div class="scenario-text">${q.scenario}</div>
                 
                 <div class="question-highlight-box">
-                    <span class="label-heading" style="color: #3498db">Legal Question</span>
+                    <span class="label-heading" style="color: var(--accent)">Legal Question</span>
                     <p class="question-text">${q.question}</p>
                 </div>
 
@@ -1114,7 +1227,7 @@
         const isHidden = box.style.display === "none" || !box.style.display;
         box.style.display = isHidden ? "block" : "none";
         btn.textContent = isHidden ? "Hide Answer" : "Show Suggested Answer";
-        btn.style.borderColor = isHidden ? "#3498db" : "#f1f2f6";
+        btn.style.borderColor = isHidden ? "var(--accent)" : "var(--panel-bg)";
     }
 
     function shuffleQuestions() {
