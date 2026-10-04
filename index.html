@@ -418,6 +418,17 @@
             padding: 0 5px;
         }
 
+        /* Paragraphs inside facts and answers */
+        .scenario-text p,
+        .ala-body p {
+            margin: 0 0 0.9em;
+        }
+
+        .scenario-text p:last-child,
+        .ala-body p:last-child {
+            margin-bottom: 0;
+        }
+
         .question-highlight-box {
             background-color: var(--question-highlight);
             padding: 25px;
@@ -1178,6 +1189,45 @@
         }
     }
 
+    // Turn a block of text into <p> paragraphs.
+    // Line breaks in the JSON (\n) always start a new paragraph. A long scenario with no
+    // line breaks is split at sentence ends into paragraphs of about 45 words, without
+    // breaking after abbreviations such as "Art.", "No.", "v." or "G.R.".
+    const ABBREVIATION = /(?:\b(?:Art|Arts|No|Nos|Sec|Secs|Par|v|vs|Mr|Mrs|Ms|Dr|Atty|Jr|Sr|St|Inc|Corp|Co|Ltd|Gen|Gov|Hon|Rep|Sen|Brgy|Sta|Sto|Ma|e\.g|i\.e|cf|p|pp|Vol)\.|\b[A-Z]\.)$/;
+
+    function splitSentences(text) {
+        const parts = text.split(/(?<=[.?!][\u201d"')]?)\s+(?=[\u201c"(]?[A-Z0-9])/);
+        const sentences = [];
+        for (const s of parts) {
+            if (sentences.length && ABBREVIATION.test(sentences[sentences.length - 1])) {
+                sentences[sentences.length - 1] += ' ' + s;
+            } else {
+                sentences.push(s);
+            }
+        }
+        return sentences;
+    }
+
+    function formatParagraphs(text, autoSplit) {
+        const str = String(text ?? '').trim();
+        if (!str) return '';
+        let paragraphs = str.split(/\s*\n\s*/).filter(Boolean);
+        if (autoSplit && paragraphs.length === 1) {
+            paragraphs = [];
+            let current = [], words = 0;
+            for (const s of splitSentences(str)) {
+                current.push(s);
+                words += s.split(/\s+/).length;
+                if (words >= 45) { paragraphs.push(current.join(' ')); current = []; words = 0; }
+            }
+            if (current.length) {
+                if (paragraphs.length && words < 15) paragraphs[paragraphs.length - 1] += ' ' + current.join(' ');
+                else paragraphs.push(current.join(' '));
+            }
+        }
+        return paragraphs.map(p => `<p>${p}</p>`).join('');
+    }
+
     function renderQuestions(data) {
         contentDiv.innerHTML = '';
         if (data.length === 0) {
@@ -1192,7 +1242,7 @@
                 <span class="q-tag">Challenge ${index + 1}</span>
                 
                 <span class="label-heading">Facts & Scenario</span>
-                <div class="scenario-text">${q.scenario}</div>
+                <div class="scenario-text">${formatParagraphs(q.scenario, true)}</div>
                 
                 <div class="question-highlight-box">
                     <span class="label-heading" style="color: var(--accent)">Legal Question</span>
@@ -1205,15 +1255,15 @@
                     <div class="ala-container">
                         <div class="ala-section">
                             <span class="ala-title title-a">Answer</span>
-                            <div class="ala-body"><strong>${q.answer}</strong></div>
+                            <div class="ala-body" style="font-weight: 700;">${formatParagraphs(q.answer)}</div>
                         </div>
                         <div class="ala-section">
                             <span class="ala-title title-l">Legal Basis</span>
-                            <div class="ala-body">${q.legal_basis}</div>
+                            <div class="ala-body">${formatParagraphs(q.legal_basis)}</div>
                         </div>
                         <div class="ala-section">
                             <span class="ala-title title-app">Application</span>
-                            <div class="ala-body">${q.application}</div>
+                            <div class="ala-body">${formatParagraphs(q.application)}</div>
                         </div>
                     </div>
                 </div>
