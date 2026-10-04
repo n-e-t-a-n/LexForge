@@ -141,3 +141,83 @@ $$;
 grant execute on function get_study_set(text)                       to anon;
 grant execute on function lookup_by_hash(text)                      to anon;
 grant execute on function upload_study_set(text, text, jsonb)       to anon;
+
+-- ===========================================================================
+-- Library management: rename and delete study sets
+-- (Already set up? Run only this section, from here to the end of the file.)
+-- ===========================================================================
+--
+-- Anyone can browse the public library, so renaming and deleting are locked
+-- behind an admin passphrase. Only a bcrypt hash of it is stored, in a table the
+-- anon key cannot read. The Library's "Manage" button asks for the passphrase.
+
+-- 1. Where the passphrase hash lives (one row). RLS on, no policies: the anon key
+--    can neither read nor write it; only the functions below can.
+create table if not exists admin_config (
+    id               boolean primary key default true check (id),
+    passphrase_hash  text not null
+);
+alter table admin_config enable row level security;
+
+-- 2. Set (or change) the passphrase. Replace the text in quotes with a long
+--    passphrase of your own, then run. Re-run this line any time to change it.
+insert into admin_config (id, passphrase_hash)
+values (true, extensions.crypt('CHANGE ME to a long passphrase', extensions.gen_salt('bf', 10)))
+on conflict (id) do update set passphrase_hash = excluded.passphrase_hash;
+
+-- 3. Check a passphrase. Used by the Manage button to unlock, and by the two
+--    functions below on every call.
+create or replace function admin_check(p_secret text)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select coalesce(
+        (select passphrase_hash = extensions.crypt(coalesce(p_secret, ''), passphrase_hash)
+         from admin_config where id),
+        false);
+$$;
+
+-- 4. Rename a set. Same 1-100 character rule as uploads.
+create or replace function admin_rename_study_set(p_secret text, p_id text, p_name text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+    if not admin_check(p_secret) then
+        raise exception 'Wrong admin passphrase';
+    end if;
+    if p_name is null or length(trim(p_name)) = 0 or length(trim(p_name)) > 100 then
+        raise exception 'Name must be 1-100 characters';
+    end if;
+    update study_sets set name = trim(p_name) where id = p_id;
+    if not found then
+        raise exception 'Study set % not found', p_id;
+    end if;
+end;
+$$;
+
+-- 5. Delete a set. Its share link stops working.
+create or replace function admin_delete_study_set(p_secret text, p_id text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+    if not admin_check(p_secret) then
+        raise exception 'Wrong admin passphrase';
+    end if;
+    delete from study_sets where id = p_id;
+    if not found then
+        raise exception 'Study set % not found', p_id;
+    end if;
+end;
+$$;
+
+grant execute on function admin_check(text)                           to anon;
+grant execute on function admin_rename_study_set(text, text, text)    to anon;
+grant execute on function admin_delete_study_set(text, text)          to anon;

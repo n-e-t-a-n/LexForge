@@ -4,7 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
+        // Font presets for the font picker. "reading" is the default.
+        window.LEXFORGE_FONTS = {
+            reading: { label: 'Reading (default)',
+                sans: "'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif",
+                serif: "'Source Serif 4', Georgia, 'Times New Roman', serif",
+                mono: "'IBM Plex Mono', ui-monospace, Consolas, monospace" },
+            sans: { label: 'All sans-serif',
+                sans: "'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif",
+                serif: "'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif",
+                mono: "'IBM Plex Mono', ui-monospace, Consolas, monospace" },
+            serif: { label: 'All serif',
+                sans: "'Source Serif 4', Georgia, 'Times New Roman', serif",
+                serif: "'Source Serif 4', Georgia, 'Times New Roman', serif",
+                mono: "'IBM Plex Mono', ui-monospace, Consolas, monospace" },
+            mono: { label: 'Monospace (original)',
+                sans: "'JetBrains Mono', ui-monospace, Consolas, monospace",
+                serif: "'JetBrains Mono', ui-monospace, Consolas, monospace",
+                mono: "'JetBrains Mono', ui-monospace, Consolas, monospace" },
+            system: { label: 'System fonts',
+                sans: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+                serif: "Georgia, 'Times New Roman', serif",
+                mono: "ui-monospace, Consolas, monospace" }
+        };
+        window.applyLexforgeFont = function (key) {
+            var f = window.LEXFORGE_FONTS[key] || window.LEXFORGE_FONTS.reading;
+            var s = document.documentElement.style;
+            s.setProperty('--font-sans', f.sans);
+            s.setProperty('--font-serif', f.serif);
+            s.setProperty('--font-mono', f.mono);
+        };
         (function() {
+            try { window.applyLexforgeFont(localStorage.getItem('lexforge-font') || 'reading'); } catch (e) {}
             try {
                 var stored = localStorage.getItem('lexforge-theme');
                 var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -16,7 +47,7 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='white'><g transform='rotate(-40 32 32)'><rect x='6' y='28' width='34' height='8' rx='2'/><rect x='34' y='20' width='22' height='24' rx='3'/></g></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=JetBrains+Mono:wght@400;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -133,6 +164,24 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.15s;
+        }
+
+        .font-select {
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: var(--card-bg);
+            border: 1px solid var(--scenario-border);
+            border-radius: 8px;
+            padding: 5px 8px;
+            cursor: pointer;
+        }
+
+        .font-select:hover,
+        .font-select:focus {
+            color: var(--primary);
+            border-color: var(--accent);
         }
 
         .theme-toggle:hover {
@@ -573,7 +622,35 @@
         /* Library view */
         .library-toolbar {
             margin-bottom: 22px;
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
         }
+        .library-toolbar #librarySearch { flex: 1 1 auto; min-width: 0; }
+        .library-toolbar .lib-manage { flex: none; border-radius: 12px; }
+        .library-toolbar .lib-manage.on { border-color: var(--accent); color: var(--accent); }
+        .library-card .lib-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .library-card .lib-admin { display: flex; gap: 8px; }
+        .lib-action {
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--scenario-border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .lib-action:hover { color: var(--primary); border-color: var(--accent); }
+        .lib-action.danger:hover { color: #c0392b; border-color: #c0392b; }
+        .btn-primary.danger { background: #c0392b; }
 
         .library-toolbar #librarySearch {
             width: 100%;
@@ -732,6 +809,7 @@
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </button>
+            <select id="fontSelect" class="font-select" aria-label="Font" title="Font"></select>
         </nav>
     </header>
 
@@ -746,6 +824,7 @@
     <div id="libraryUI" class="hidden">
         <div class="library-toolbar">
             <input type="text" id="librarySearch" placeholder="Search library by name...">
+            <button type="button" class="btn-secondary lib-manage" id="manageBtn" title="Rename or delete sets (needs the admin passphrase)">Manage</button>
         </div>
         <div id="libraryList"></div>
     </div>
@@ -776,6 +855,18 @@
             <div class="modal-actions">
                 <button class="btn-secondary" id="modalCancel" type="button">Keep Private</button>
                 <button class="btn-primary" id="modalConfirm" type="button">Save &amp; Share</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dialogOverlay" class="modal-overlay hidden">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+            <h2 class="modal-title" id="dialogTitle"></h2>
+            <p class="modal-subtitle" id="dialogText"></p>
+            <input type="text" id="dialogInput" class="modal-input" autocomplete="off">
+            <div class="modal-actions">
+                <button class="btn-secondary" id="dialogCancel" type="button">Cancel</button>
+                <button class="btn-primary" id="dialogConfirm" type="button">OK</button>
             </div>
         </div>
     </div>
@@ -828,6 +919,24 @@
         themeToggle.setAttribute('title', 'Switch to ' + next + ' mode');
     }
     applyTheme(document.documentElement.dataset.theme || 'light');
+
+    // Font picker
+    const fontSelect = document.getElementById('fontSelect');
+    const FONT_KEY = 'lexforge-font';
+    let currentFont = 'reading';
+    try { currentFont = localStorage.getItem(FONT_KEY) || 'reading'; } catch (e) {}
+    if (!window.LEXFORGE_FONTS[currentFont]) currentFont = 'reading';
+    Object.entries(window.LEXFORGE_FONTS).forEach(([key, f]) => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = f.label;
+        fontSelect.appendChild(opt);
+    });
+    fontSelect.value = currentFont;
+    fontSelect.addEventListener('change', () => {
+        window.applyLexforgeFont(fontSelect.value);
+        try { localStorage.setItem(FONT_KEY, fontSelect.value); } catch (e) {}
+    });
 
     themeToggle.addEventListener('click', () => {
         const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -915,6 +1024,139 @@
             input.addEventListener('keydown', onKey);
             overlay.addEventListener('click', onOverlay);
         });
+    }
+
+    // Generic in-page dialog. Resolves with the input text (when an input is shown),
+    // true (confirm without input), or null (cancelled).
+    function openDialog({ title, text, input, confirmText, danger }) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('dialogOverlay');
+            const titleEl = document.getElementById('dialogTitle');
+            const textEl = document.getElementById('dialogText');
+            const inputEl = document.getElementById('dialogInput');
+            const confirmBtn = document.getElementById('dialogConfirm');
+            const cancelBtn = document.getElementById('dialogCancel');
+
+            titleEl.textContent = title;
+            textEl.textContent = text || '';
+            textEl.classList.toggle('hidden', !text);
+            inputEl.classList.toggle('hidden', !input);
+            if (input) {
+                inputEl.type = input.type || 'text';
+                inputEl.value = input.value || '';
+                inputEl.placeholder = input.placeholder || '';
+            }
+            confirmBtn.textContent = confirmText || 'OK';
+            confirmBtn.classList.toggle('danger', !!danger);
+            overlay.classList.remove('hidden');
+            setTimeout(() => { if (input) { inputEl.focus(); inputEl.select(); } else confirmBtn.focus(); }, 50);
+
+            const cleanup = () => {
+                overlay.classList.add('hidden');
+                confirmBtn.removeEventListener('click', onConfirm);
+                cancelBtn.removeEventListener('click', onCancel);
+                document.removeEventListener('keydown', onKey);
+                overlay.removeEventListener('click', onOverlay);
+            };
+            const onConfirm = () => { const v = input ? inputEl.value : true; cleanup(); resolve(v); };
+            const onCancel = () => { cleanup(); resolve(null); };
+            const onKey = (e) => {
+                if (e.key === 'Enter') onConfirm();
+                else if (e.key === 'Escape') onCancel();
+            };
+            const onOverlay = (e) => { if (e.target === overlay) onCancel(); };
+
+            confirmBtn.addEventListener('click', onConfirm);
+            cancelBtn.addEventListener('click', onCancel);
+            document.addEventListener('keydown', onKey);
+            overlay.addEventListener('click', onOverlay);
+        });
+    }
+
+    // Library management (rename / delete). Needs the admin passphrase stored in the
+    // admin_config table; see the library management section of supabase_setup.sql.
+    const ADMIN_KEY = 'lexforge-admin';
+    const manageBtn = document.getElementById('manageBtn');
+    let adminSecret = null;
+    try { adminSecret = localStorage.getItem(ADMIN_KEY); } catch (e) {}
+
+    function setAdmin(secret) {
+        adminSecret = secret;
+        try {
+            if (secret) localStorage.setItem(ADMIN_KEY, secret);
+            else localStorage.removeItem(ADMIN_KEY);
+        } catch (e) {}
+        manageBtn.textContent = secret ? 'Done managing' : 'Manage';
+        manageBtn.classList.toggle('on', !!secret);
+        refreshLibraryList();
+    }
+
+    function refreshLibraryList() {
+        const term = librarySearch.value.trim().toLowerCase();
+        renderLibraryList(term
+            ? libraryRows.filter(r => (r.name || '').toLowerCase().includes(term))
+            : libraryRows);
+    }
+
+    function adminError(error) {
+        const msg = error && error.message ? error.message : String(error);
+        if (/passphrase/i.test(msg)) {
+            setAdmin(null);
+            showToast('Wrong admin passphrase. Click Manage to try again.', true);
+        } else if (/could not find the function|does not exist/i.test(msg)) {
+            showToast('Library management is not set up yet. Run the library management section of supabase_setup.sql in Supabase.', true);
+        } else {
+            showToast(msg, true);
+        }
+    }
+
+    manageBtn.addEventListener('click', async () => {
+        if (adminSecret) { setAdmin(null); return; }
+        if (!sb) { showToast("Supabase isn't configured in this build.", true); return; }
+        const secret = await openDialog({
+            title: 'Manage the library',
+            text: 'Enter the admin passphrase to rename or delete study sets. It stays saved in this browser until you click Done managing.',
+            input: { type: 'password', placeholder: 'Admin passphrase' },
+            confirmText: 'Unlock'
+        });
+        if (!secret) return;
+        const { data, error } = await sb.rpc('admin_check', { p_secret: secret });
+        if (error) return adminError(error);
+        if (!data) return showToast('Wrong admin passphrase.', true);
+        setAdmin(secret);
+        showToast('Manage mode on');
+    });
+
+    async function renameSet(row) {
+        const name = await openDialog({
+            title: 'Rename study set',
+            input: { value: row.name, placeholder: 'Study set name' },
+            confirmText: 'Save name'
+        });
+        if (name === null) return;
+        const trimmed = name.trim();
+        if (!trimmed || trimmed.length > 100) return showToast('Names must be 1 to 100 characters.', true);
+        if (trimmed === row.name) return;
+        const { error } = await sb.rpc('admin_rename_study_set', { p_secret: adminSecret, p_id: row.id, p_name: trimmed });
+        if (error) return adminError(error);
+        row.name = trimmed;
+        refreshLibraryList();
+        showToast('Renamed');
+    }
+
+    async function deleteSet(row) {
+        const ok = await openDialog({
+            title: 'Delete this study set?',
+            text: '"' + row.name + '" will be removed from the library and its share link will stop working. This cannot be undone.',
+            confirmText: 'Delete set',
+            danger: true
+        });
+        if (!ok) return;
+        const { error } = await sb.rpc('admin_delete_study_set', { p_secret: adminSecret, p_id: row.id });
+        if (error) return adminError(error);
+        libraryRows = libraryRows.filter(r => r.id !== row.id);
+        refreshLibraryList();
+        showToast('Deleted');
     }
 
     function showToast(msg, isError) {
@@ -1028,11 +1270,22 @@
                     <h3 class="lib-name">${escapeHtml(row.name)}</h3>
                     <button class="btn-secondary lib-copy" type="button">Copy share link</button>
                 </div>
-                <div class="lib-meta">
-                    <span class="lib-count">${escapeHtml(countLabel)}</span>
-                    &nbsp;&middot;&nbsp; uploaded ${escapeHtml(relativeTime(row.created_at))}
+                <div class="lib-bottom">
+                    <div class="lib-meta">
+                        <span class="lib-count">${escapeHtml(countLabel)}</span>
+                        &nbsp;&middot;&nbsp; uploaded ${escapeHtml(relativeTime(row.created_at))}
+                    </div>
+                    ${adminSecret ? `<div class="lib-admin">
+                        <button class="lib-action" type="button" data-act="rename">Rename</button>
+                        <button class="lib-action danger" type="button" data-act="delete">Delete</button>
+                    </div>` : ''}
                 </div>
             `;
+            card.querySelectorAll('.lib-action').forEach(btn => btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (btn.dataset.act === 'rename') renameSet(row);
+                else deleteSet(row);
+            }));
             card.addEventListener('click', () => {
                 window.location.href = window.location.pathname + '?id=' + encodeURIComponent(row.id);
             });
@@ -1077,7 +1330,9 @@
             return;
         }
         libraryRows = data;
-        renderLibraryList(libraryRows);
+        manageBtn.textContent = adminSecret ? 'Done managing' : 'Manage';
+        manageBtn.classList.toggle('on', !!adminSecret);
+        refreshLibraryList();
     }
 
     async function loadSharedSet(id) {
