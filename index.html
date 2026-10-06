@@ -443,6 +443,31 @@
             margin-bottom: 35px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.05);
             border: 1px solid rgba(0,0,0,0.03);
+            position: relative;
+        }
+
+        .btn-copy {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--card-bg);
+            border: 2px solid var(--panel-bg);
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover,
+        .btn-copy.copied {
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
         input, button, select, textarea {
@@ -1479,8 +1504,12 @@
     }
 
     function formatParagraphs(text, autoSplit) {
+        return splitParagraphs(text, autoSplit).map(p => `<p>${p}</p>`).join('');
+    }
+
+    function splitParagraphs(text, autoSplit) {
         const str = String(text ?? '').trim();
-        if (!str) return '';
+        if (!str) return [];
         let paragraphs = str.split(/\s*\n\s*/).filter(Boolean);
         if (autoSplit && paragraphs.length === 1) {
             paragraphs = [];
@@ -1495,8 +1524,36 @@
                 else paragraphs.push(current.join(' '));
             }
         }
-        return paragraphs.map(p => `<p>${p}</p>`).join('');
+        return paragraphs;
     }
+
+    // Scenario paragraphs as displayed, separated by blank lines, with the legal
+    // question appended to the last paragraph after a space.
+    function buildCopyText(q) {
+        const paragraphs = splitParagraphs(q.scenario, true);
+        const question = String(q.question ?? '').trim();
+        if (!paragraphs.length) return question;
+        if (question) paragraphs[paragraphs.length - 1] += ' ' + question;
+        return paragraphs.join('\n\n');
+    }
+
+    async function copyText(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            const ok = document.execCommand('copy');
+            ta.remove();
+            if (!ok) throw new Error('copy failed');
+        }
+    }
+
+    const COPY_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
     function renderQuestions(data) {
         contentDiv.innerHTML = '';
@@ -1509,6 +1566,7 @@
             const card = document.createElement('div');
             card.className = 'question-card';
             card.innerHTML = `
+                <button class="btn-copy" type="button" title="Copy facts and question" aria-label="Copy facts and question">${COPY_ICON}<span>Copy</span></button>
                 <span class="q-tag">Challenge ${index + 1}</span>
                 
                 <span class="label-heading">Facts & Scenario</span>
@@ -1538,6 +1596,22 @@
                     </div>
                 </div>
             `;
+            const copyBtn = card.querySelector('.btn-copy');
+            copyBtn.addEventListener('click', async () => {
+                const label = copyBtn.querySelector('span');
+                try {
+                    await copyText(buildCopyText(q));
+                    label.textContent = 'Copied';
+                    copyBtn.classList.add('copied');
+                } catch {
+                    label.textContent = 'Failed';
+                }
+                clearTimeout(copyBtn._reset);
+                copyBtn._reset = setTimeout(() => {
+                    label.textContent = 'Copy';
+                    copyBtn.classList.remove('copied');
+                }, 1500);
+            });
             contentDiv.appendChild(card);
         });
     }
