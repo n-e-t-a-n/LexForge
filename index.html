@@ -1527,13 +1527,12 @@
         return paragraphs;
     }
 
-    // Scenario paragraphs as displayed, separated by blank lines, with the legal
-    // question appended to the last paragraph after a space.
+    // Scenario paragraphs as displayed, then the legal question as its own
+    // paragraph, all separated by blank lines.
     function buildCopyText(q) {
         const paragraphs = splitParagraphs(q.scenario, true);
         const question = String(q.question ?? '').trim();
-        if (!paragraphs.length) return question;
-        if (question) paragraphs[paragraphs.length - 1] += ' ' + question;
+        if (question) paragraphs.push(question);
         return paragraphs.join('\n\n');
     }
 
