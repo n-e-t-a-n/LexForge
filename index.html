@@ -260,36 +260,6 @@
             flex-wrap: wrap;
         }
 
-        .share-bar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: var(--card-bg);
-            padding: 12px 18px;
-            border-radius: 12px;
-            margin-bottom: 40px;
-            border: 1px solid var(--scenario-border);
-            font-size: 0.9rem;
-            flex-wrap: wrap;
-        }
-
-        .share-bar .share-label {
-            font-weight: 700;
-            color: var(--text-muted);
-            white-space: nowrap;
-        }
-
-        .share-bar code {
-            flex: 1 1 200px;
-            min-width: 0;
-            background: var(--panel-bg);
-            padding: 8px 12px;
-            border-radius: 6px;
-            overflow-x: auto;
-            white-space: nowrap;
-            color: var(--primary);
-        }
-
         .toast {
             position: fixed;
             top: 20px;
@@ -807,9 +777,6 @@
             }
             .hide-mobile { display: none; }
 
-            .share-bar { flex-direction: column; align-items: stretch; }
-            .share-bar code { width: 100%; box-sizing: border-box; flex: none; }
-            .share-bar .btn-secondary { width: 100%; }
 
             .modal { padding: 28px 22px; }
             .modal-actions { flex-direction: column-reverse; }
@@ -863,11 +830,6 @@
             <button class="btn-secondary" onclick="window.location.href = window.location.pathname">New<span class="hide-mobile">&nbsp;Session</span></button>
         </div>
 
-        <div id="shareBar" class="share-bar hidden">
-            <span class="share-label">Share link:</span>
-            <code id="shareLinkDisplay"></code>
-            <button id="copyShareBtn" class="btn-secondary" onclick="copyShareLink()">Copy</button>
-        </div>
 
         <div id="content"></div>
     </div>
@@ -917,7 +879,6 @@
     }
 
     let currentData = [];
-    let currentShareId = null;
 
     const fileInput = document.getElementById('fileInput');
     const contentDiv = document.getElementById('content');
@@ -930,8 +891,6 @@
     const navLibrary = document.getElementById('navLibrary');
     const themeToggle = document.getElementById('themeToggle');
     const searchBar = document.getElementById('searchBar');
-    const shareBar = document.getElementById('shareBar');
-    const shareLinkDisplay = document.getElementById('shareLinkDisplay');
     const toastEl = document.getElementById('toast');
 
     let libraryRows = [];
@@ -1195,24 +1154,11 @@
     }
 
     function setShareId(id) {
-        currentShareId = id;
-        const url = window.location.origin + window.location.pathname + '?id=' + id;
-        shareLinkDisplay.textContent = url;
-        shareBar.classList.remove('hidden');
         const newUrl = new URL(window.location.href);
         newUrl.search = '?id=' + id;
         window.history.replaceState({}, '', newUrl);
     }
 
-    function copyShareLink() {
-        if (!currentShareId) return;
-        const url = window.location.origin + window.location.pathname + '?id=' + currentShareId;
-        navigator.clipboard.writeText(url).then(
-            () => showToast('Link copied'),
-            () => showToast('Copy failed — select the link manually', true)
-        );
-    }
-    window.copyShareLink = copyShareLink;
 
     function showSkeletons(count) {
         contentDiv.innerHTML = '';
@@ -1432,7 +1378,7 @@
         if (existing && existing.length > 0) {
             // Already in the DB — skip the prompt and the upload, just surface the link.
             setShareId(existing[0].id);
-            showToast('Already in library — share link ready');
+            showToast('Already in library');
             return;
         }
 
@@ -1457,7 +1403,7 @@
                 return;
             }
             setShareId(id);
-            showToast('Saved — share link ready');
+            showToast('Saved to library');
         } catch (err) {
             console.error(err);
             showToast('Upload failed: ' + err.message, true);
