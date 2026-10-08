@@ -561,6 +561,177 @@
             color: var(--text-main);
         }
 
+        /* Flashcard Mode button in the list toolbar; Back button in flashcard mode */
+        .btn-flash { border-color: var(--accent); color: var(--accent); }
+        .btn-flash:hover { background: var(--accent); color: #fff; }
+        .btn-fc-back { display: none; }
+        body.flash .btn-fc-back { display: inline-block; }
+        body.flash .btn-flash { display: none; }
+
+        /* Flashcards: one card at a time, situation then answer, like a slide deck */
+        .fc-progress {
+            height: 4px;
+            background: var(--panel-border);
+            border-radius: 4px;
+            overflow: hidden;
+            flex: none;
+            margin-bottom: 10px;
+        }
+
+        .fc-progress span {
+            display: block;
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.2s ease;
+        }
+
+        /* Flashcard mode is a focus view: only the toolbar, the card and its buttons,
+           sized to fit one screen. */
+        body.flash header,
+        body.flash footer,
+        body.flash #searchBar,
+        body.flash .btn-new { display: none; }
+
+        body.flash .container {
+            height: 100vh;
+            height: 100dvh;
+            padding: 14px 16px 16px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        body.flash #mainUI {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.flash .toolbar {
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+
+        body.flash .toolbar .btn-secondary { padding: 8px 16px; }
+
+        body.flash #content {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .fc-counter {
+            display: none;
+            margin-left: auto;
+            font-weight: 700;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        body.flash .fc-counter { display: block; }
+
+        /* The card area is a stage; the slide inside it copies the PDF deck: a 16:9 white
+           page, black text, sized in container units so it scales like the PDF does.
+           (13.333in slide: 26pt text = 2.71cqw, 32pt = 3.33cqw, 18pt = 1.875cqw.) */
+        .fc-card {
+            flex: 1;
+            min-height: 0;
+            container-type: size;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        .fc-slide {
+            width: min(100cqw, 100cqh * 16 / 9);
+            aspect-ratio: 16 / 9;
+            container-type: inline-size;
+            background: #fff;
+            color: #000;
+            font-family: "Segoe UI", Arial, sans-serif;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+            border-radius: 20px;
+            position: relative;
+            overflow-y: auto;
+            display: flex;
+            box-sizing: border-box;
+            padding: 4cqw 5.5cqw;
+        }
+
+        .fc-card:focus-visible .fc-slide { box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5); }
+
+        /* Portrait phone: a 16:9 page would be too small to read, so the page fills the screen. */
+        @container (max-aspect-ratio: 1/1) {
+            .fc-slide { width: 100%; height: 100%; aspect-ratio: auto; padding: 6cqw 5.5cqw; }
+        }
+
+        /* margin:auto centres a short slide but lets a long one scroll from its top */
+        .fc-face {
+            margin: auto 0;
+            width: 100%;
+            animation: fcFlip 0.22s ease-out;
+        }
+
+        @keyframes fcFlip {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        .fc-label {
+            display: block;
+            font-size: max(1.875cqw, 12px);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: max(3cqw, 18px);
+        }
+
+        .fc-face p {
+            font-size: max(2.71cqw, 16px);
+            line-height: 1.45;
+            margin: 0 0 max(2.1cqw, 10px);
+        }
+
+        .fc-question,
+        .fc-verdict {
+            font-size: max(3.33cqw, 19px);
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .fc-question { margin-top: max(2.25cqw, 12px); }
+        .fc-verdict { margin-bottom: max(2.85cqw, 14px); }
+
+        .fc-basis {
+            font-size: max(1.67cqw, 13px);
+            margin-top: max(2.25cqw, 12px);
+        }
+
+        .fc-face p.fc-app { font-size: max(2cqw, 14px); }
+
+
+        .fc-nav {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .fc-nav .btn-secondary { padding: 10px 18px; }
+        .fc-nav #fcPrev { justify-self: start; }
+        .fc-nav #fcNext { justify-self: end; }
+        .fc-nav .btn-secondary:disabled { opacity: 0.4; cursor: default; }
+        .fc-nav .btn-primary { padding: 10px 26px; font-size: 0.95rem; }
+
         footer {
             text-align: center;
             margin-top: 80px;
@@ -776,6 +947,9 @@
                 font-size: 0.85rem;
             }
             .hide-mobile { display: none; }
+            body.flash .container { padding: 10px 12px 12px; }
+            .fc-nav .btn-secondary { padding: 10px 12px; }
+            .fc-nav .btn-primary { padding: 10px 16px; }
 
 
             .modal { padding: 28px 22px; }
@@ -825,9 +999,12 @@
 
     <div id="mainUI" class="hidden">
         <div class="toolbar">
+            <button type="button" class="btn-secondary btn-fc-back" id="fcExit">&larr; Back</button>
             <input type="text" id="searchBar" placeholder="Search facts or keywords...">
             <button class="btn-secondary" onclick="shuffleQuestions()">Shuffle<span class="hide-mobile">&nbsp;Challenges</span></button>
-            <button class="btn-secondary" onclick="window.location.href = window.location.pathname">New<span class="hide-mobile">&nbsp;Session</span></button>
+            <button class="btn-secondary btn-new" onclick="window.location.href = window.location.pathname">New<span class="hide-mobile">&nbsp;Session</span></button>
+            <span class="fc-counter" id="fcCounter"></span>
+            <button type="button" class="btn-secondary btn-flash" id="fcEnter">Flashcard<span class="hide-mobile">&nbsp;Mode</span></button>
         </div>
 
 
@@ -1155,7 +1332,7 @@
 
     function setShareId(id) {
         const newUrl = new URL(window.location.href);
-        newUrl.search = '?id=' + id;
+        newUrl.search = '?id=' + id + (viewMode === 'flash' ? '&flash=1' : '');
         window.history.replaceState({}, '', newUrl);
     }
 
@@ -1502,13 +1679,163 @@
 
     const COPY_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
+    // === View: List (all challenges) or Flashcard Mode (one card at a time) ===
+    // Flashcard Mode is its own history entry (?flash=1), so the browser's back
+    // button and the in-page Back button both return to the list.
+    let viewMode = new URLSearchParams(window.location.search).get('flash') === '1' ? 'flash' : 'list';
+    let shownData = [];
+    let fcIndex = 0, fcBack = false;
+
+    document.getElementById('fcEnter').addEventListener('click', () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('flash', '1');
+        window.history.pushState({ flash: true }, '', url);
+        viewMode = 'flash';
+        fcIndex = 0;
+        fcBack = false;
+        renderView();
+        window.scrollTo(0, 0);
+    });
+
+    document.getElementById('fcExit').addEventListener('click', () => {
+        if (window.history.state && window.history.state.flash) {
+            window.history.back();
+            return;
+        }
+        // Opened straight on a ?flash=1 link: nothing to go back to, so drop the flag.
+        const url = new URL(window.location.href);
+        url.searchParams.delete('flash');
+        window.history.replaceState({}, '', url);
+        viewMode = 'list';
+        renderView();
+    });
+
+    window.addEventListener('popstate', () => {
+        viewMode = new URLSearchParams(window.location.search).get('flash') === '1' ? 'flash' : 'list';
+        renderView();
+    });
+
     function renderQuestions(data) {
-        contentDiv.innerHTML = '';
-        if (data.length === 0) {
+        shownData = data;
+        fcIndex = 0;
+        fcBack = false;
+        renderView();
+    }
+
+    function renderView() {
+        document.body.classList.toggle('flash', viewMode === 'flash');
+        document.getElementById('fcCounter').textContent = '';
+        if (shownData.length === 0) {
             contentDiv.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No results found for your search.</div>';
             return;
         }
+        if (viewMode === 'flash') renderFlashcard();
+        else renderList(shownData);
+    }
 
+    // Short text reads best one sentence per line, as on the slides; long text
+    // falls back to the usual paragraphs of about 45 words.
+    function linesOrParagraphs(text) {
+        const str = String(text ?? '').trim();
+        if (!str) return '';
+        if (!str.includes('\n') && str.split(/\s+/).length <= 90) {
+            return splitSentences(str).map(s => `<p>${s}</p>`).join('');
+        }
+        return formatParagraphs(str, true);
+    }
+
+    function renderFlashcard() {
+        const q = shownData[fcIndex];
+        const n = fcIndex + 1, total = shownData.length;
+        const hasScenario = String(q.scenario ?? '').trim() !== '';
+        let face;
+        if (!fcBack) {
+            face = `<div class="fc-face fc-front">
+                <span class="fc-label">${hasScenario ? 'Situation' : 'Question'} ${n}</span>
+                ${hasScenario ? `<div class="fc-scenario">${linesOrParagraphs(q.scenario)}</div>` : ''}
+                <p class="fc-question">${q.question ?? ''}</p>
+            </div>`;
+        } else {
+            // The first sentence of the answer is the verdict; the rest are the reasons.
+            // A bare "Yes." or "No." stands alone ("No." is otherwise read as the abbreviation).
+            const answer = String(q.answer ?? '').trim();
+            const yesNo = answer.match(/^(Yes|No)\.\s+/);
+            const sentences = yesNo ? [yesNo[0].trim(), ...splitSentences(answer.slice(yesNo[0].length))]
+                                    : splitSentences(answer);
+            const verdict = sentences.shift() || '';
+            const app = String(q.application ?? '').trim();
+            const basis = String(q.legal_basis ?? '').trim();
+            face = `<div class="fc-face fc-back">
+                <span class="fc-label">Answer ${n}</span>
+                <p class="fc-verdict">${verdict}</p>
+                ${sentences.length ? `<div class="fc-reasons">${linesOrParagraphs(sentences.join(' '))}</div>` : ''}
+                ${app ? `<p class="fc-app">${app}</p>` : ''}
+                ${basis ? `<div class="fc-basis">${basis}</div>` : ''}
+            </div>`;
+        }
+        contentDiv.innerHTML = `
+            <div class="fc-progress"><span style="width:${(n / total) * 100}%"></span></div>
+            <div class="fc-card" tabindex="0" role="button" aria-label="${fcBack ? 'Show the question' : 'Show the answer'}">
+                <div class="fc-slide">${face}</div>
+            </div>
+            <div class="fc-nav">
+                <button type="button" class="btn-secondary" id="fcPrev" ${n === 1 ? 'disabled' : ''}>&larr; Prev</button>
+                <button type="button" class="btn-primary" id="fcFlipBtn">${fcBack ? 'Show question' : 'Show answer'}</button>
+                <button type="button" class="btn-secondary" id="fcNext" ${n === total ? 'disabled' : ''}>Next &rarr;</button>
+            </div>
+        `;
+        document.getElementById('fcCounter').textContent = `${n} / ${total}`;
+        const card = contentDiv.querySelector('.fc-card');
+        let touchX = null, touchY = null, swiped = false;
+        card.addEventListener('touchstart', (e) => {
+            touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; swiped = false;
+        }, { passive: true });
+        card.addEventListener('touchend', (e) => {
+            if (touchX === null) return;
+            const dx = e.changedTouches[0].clientX - touchX;
+            const dy = e.changedTouches[0].clientY - touchY;
+            touchX = null;
+            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                swiped = true;
+                fcStep(dx < 0 ? 1 : -1);
+            }
+        });
+        card.addEventListener('click', () => { if (!swiped) fcFlip(); swiped = false; });
+        document.getElementById('fcPrev').addEventListener('click', () => fcStep(-1));
+        document.getElementById('fcNext').addEventListener('click', () => fcStep(1));
+        document.getElementById('fcFlipBtn').addEventListener('click', fcFlip);
+    }
+
+    function fcFlip() {
+        fcBack = !fcBack;
+        renderFlashcard();
+    }
+
+    // Next and Prev move between questions and always land on the question side;
+    // the answer is only ever one flip away.
+    function fcStep(dir) {
+        const next = Math.max(0, Math.min(shownData.length - 1, fcIndex + dir));
+        if (next === fcIndex && !fcBack) return;
+        fcIndex = next;
+        fcBack = false;
+        renderFlashcard();
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (viewMode !== 'flash' || mainUI.classList.contains('hidden') || !shownData.length) return;
+        const t = e.target instanceof Element ? e.target : document.body;
+        if (t.closest('input, textarea, select')) return;
+        // Space and Enter already press a focused button; leave them to it.
+        if ((e.key === ' ' || e.key === 'Enter') && t.closest('button')) return;
+        if (!document.getElementById('dialogOverlay').classList.contains('hidden')) return;
+        if (!document.getElementById('modalOverlay').classList.contains('hidden')) return;
+        if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); fcStep(1); }
+        else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); fcStep(-1); }
+        else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); fcFlip(); }
+    });
+
+    function renderList(data) {
+        contentDiv.innerHTML = '';
         data.forEach((q, index) => {
             const card = document.createElement('div');
             card.className = 'question-card';
