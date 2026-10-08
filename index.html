@@ -565,8 +565,10 @@
         .btn-flash { border-color: var(--accent); color: var(--accent); }
         .btn-flash:hover { background: var(--accent); color: #fff; }
         .btn-fc-back,
-        .fc-theme { display: none; }
+        .fc-theme,
+        .fc-font { display: none; }
         body.flash .fc-theme { display: inline-flex; }
+        body.flash .fc-font { display: inline-block; }
         body.flash .btn-fc-back { display: inline-block; }
         body.flash .btn-flash { display: none; }
 
@@ -665,7 +667,7 @@
             container-type: inline-size;
             background: #fff;
             color: #000;
-            font-family: "Segoe UI", Arial, sans-serif;
+            font-family: var(--font-sans);
             box-shadow: 0 4px 18px rgba(0,0,0,0.12);
             border-radius: 20px;
             position: relative;
@@ -1060,6 +1062,7 @@
             <button class="btn-secondary" onclick="shuffleQuestions()">Shuffle<span class="hide-mobile">&nbsp;Challenges</span></button>
             <button class="btn-secondary btn-new" onclick="window.location.href = window.location.pathname">New<span class="hide-mobile">&nbsp;Session</span></button>
             <span class="fc-counter" id="fcCounter"></span>
+            <select id="fcFontSelect" class="font-select fc-font" aria-label="Font" title="Font"></select>
             <button type="button" id="fcThemeToggle" class="theme-toggle fc-theme" aria-label="Switch to dark mode" title="Switch to dark mode">
                 <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="4"></circle>
@@ -1156,16 +1159,21 @@
     let currentFont = 'reading';
     try { currentFont = localStorage.getItem(FONT_KEY) || 'reading'; } catch (e) {}
     if (!window.LEXFORGE_FONTS[currentFont]) currentFont = 'reading';
-    Object.entries(window.LEXFORGE_FONTS).forEach(([key, f]) => {
-        const opt = document.createElement('option');
-        opt.value = key;
-        opt.textContent = f.label;
-        fontSelect.appendChild(opt);
-    });
-    fontSelect.value = currentFont;
-    fontSelect.addEventListener('change', () => {
-        window.applyLexforgeFont(fontSelect.value);
-        try { localStorage.setItem(FONT_KEY, fontSelect.value); } catch (e) {}
+    // Flashcard Mode hides the header, so it has its own copy of the picker; the two stay in sync.
+    const fontSelects = [fontSelect, document.getElementById('fcFontSelect')];
+    fontSelects.forEach(sel => {
+        Object.entries(window.LEXFORGE_FONTS).forEach(([key, f]) => {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = f.label;
+            sel.appendChild(opt);
+        });
+        sel.value = currentFont;
+        sel.addEventListener('change', () => {
+            window.applyLexforgeFont(sel.value);
+            fontSelects.forEach(other => { other.value = sel.value; });
+            try { localStorage.setItem(FONT_KEY, sel.value); } catch (e) {}
+        });
     });
 
     // Flashcard Mode hides the header, so it carries its own copy of the theme button.
