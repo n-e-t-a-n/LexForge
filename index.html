@@ -678,15 +678,25 @@
 
         /* Portrait phone: a 16:9 page would be too small to read, so the page fills the screen. */
         @container (max-aspect-ratio: 1/1) {
-            .fc-slide { width: 100%; height: 100%; aspect-ratio: auto; padding: 6cqw 5.5cqw; }
+            .fc-slide {
+                width: 100%;
+                aspect-ratio: auto;
+                min-height: min(100cqh, 115cqw);
+                max-height: 100cqh;
+                padding: 9cqw 7cqw;
+            }
         }
 
         /* margin:auto centres a short slide but lets a long one scroll from its top */
         .fc-face {
             margin: auto 0;
             width: 100%;
+            text-align: center;
             animation: fcFlip 0.22s ease-out;
         }
+
+        /* Long bar-style facts and answers read badly centred, so they stay left-aligned. */
+        .fc-face.fc-long { text-align: left; }
 
         @keyframes fcFlip {
             from { opacity: 0; }
@@ -1752,13 +1762,17 @@
         return formatParagraphs(str, true);
     }
 
+    function isLong(text) {
+        return String(text ?? '').trim().split(/\s+/).length > 90;
+    }
+
     function renderFlashcard() {
         const q = shownData[fcIndex];
         const n = fcIndex + 1, total = shownData.length;
         const hasScenario = String(q.scenario ?? '').trim() !== '';
         let face;
         if (!fcBack) {
-            face = `<div class="fc-face fc-front">
+            face = `<div class="fc-face fc-front${isLong(q.scenario) ? ' fc-long' : ''}">
                 <span class="fc-label">${hasScenario ? 'Situation' : 'Question'} ${n}</span>
                 ${hasScenario ? `<div class="fc-scenario">${linesOrParagraphs(q.scenario)}</div>` : ''}
                 <p class="fc-question">${q.question ?? ''}</p>
@@ -1773,7 +1787,7 @@
             const verdict = sentences.shift() || '';
             const app = String(q.application ?? '').trim();
             const basis = String(q.legal_basis ?? '').trim();
-            face = `<div class="fc-face fc-back">
+            face = `<div class="fc-face fc-back${isLong(answer + ' ' + app) ? ' fc-long' : ''}">
                 <span class="fc-label">Answer ${n}</span>
                 <p class="fc-verdict">${verdict}</p>
                 ${sentences.length ? `<div class="fc-reasons">${linesOrParagraphs(sentences.join(' '))}</div>` : ''}
