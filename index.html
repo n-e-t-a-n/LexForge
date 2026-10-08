@@ -564,21 +564,30 @@
         /* Flashcard Mode button in the list toolbar; Back button in flashcard mode */
         .btn-flash { border-color: var(--accent); color: var(--accent); }
         .btn-flash:hover { background: var(--accent); color: #fff; }
-        .btn-fc-back { display: none; }
+        .btn-fc-back,
+        .fc-theme { display: none; }
+        body.flash .fc-theme { display: inline-flex; }
         body.flash .btn-fc-back { display: inline-block; }
         body.flash .btn-flash { display: none; }
 
         /* Flashcards: one card at a time, situation then answer, like a slide deck */
+        /* Segmented progress: one segment per card, or per group of cards in big sets */
         .fc-progress {
-            height: 4px;
-            background: var(--panel-border);
-            border-radius: 4px;
-            overflow: hidden;
+            display: flex;
+            gap: 3px;
+            height: 5px;
             flex: none;
             margin-bottom: 10px;
         }
 
-        .fc-progress span {
+        .fc-seg {
+            flex: 1;
+            background: var(--panel-border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .fc-seg span {
             display: block;
             height: 100%;
             background: var(--accent);
@@ -662,8 +671,10 @@
             position: relative;
             overflow-y: auto;
             display: flex;
+            flex-direction: column;
             box-sizing: border-box;
-            padding: 4cqw 5.5cqw;
+            --fc-pad: 4cqw;
+            padding: 0 5.5cqw var(--fc-pad);
         }
 
         /* Dark mode: the same page, inverted to light text on the dark card colour. */
@@ -683,7 +694,8 @@
                 aspect-ratio: auto;
                 min-height: min(100cqh, 115cqw);
                 max-height: 100cqh;
-                padding: 9cqw 7cqw;
+                --fc-pad: 9cqw;
+                padding: 0 7cqw var(--fc-pad);
             }
         }
 
@@ -692,24 +704,50 @@
             margin: auto 0;
             width: 100%;
             text-align: center;
-            animation: fcFlip 0.22s ease-out;
         }
 
         /* Long bar-style facts and answers read badly centred, so they stay left-aligned. */
         .fc-face.fc-long { text-align: left; }
 
-        @keyframes fcFlip {
-            from { opacity: 0; }
-            to   { opacity: 1; }
+        /* Turning the card: it dips and fades, then the other side settles in.
+           Moving to another question slides the new card in from that side. */
+        .fc-slide.fc-flip-out { animation: fcFlipOut 0.12s ease-in forwards; }
+        .fc-slide.fc-flip-in  { animation: fcFlipIn 0.2s ease-out; }
+        .fc-slide.fc-in-next  { animation: fcInNext 0.24s ease-out; }
+        .fc-slide.fc-in-prev  { animation: fcInPrev 0.24s ease-out; }
+
+        @keyframes fcFlipOut { to { transform: scale(0.97); opacity: 0.2; } }
+        @keyframes fcFlipIn {
+            from { transform: scale(0.97); opacity: 0.2; }
+            to   { transform: none; opacity: 1; }
+        }
+        @keyframes fcInNext {
+            from { transform: translateX(48px); opacity: 0; }
+            to   { transform: none; opacity: 1; }
+        }
+        @keyframes fcInPrev {
+            from { transform: translateX(-48px); opacity: 0; }
+            to   { transform: none; opacity: 1; }
         }
 
+        @media (prefers-reduced-motion: reduce) {
+            .fc-slide.fc-flip-out, .fc-slide.fc-flip-in,
+            .fc-slide.fc-in-next, .fc-slide.fc-in-prev { animation: none; }
+        }
+
+        /* The label stays pinned to the top of the card, even while a long card scrolls. */
         .fc-label {
-            display: block;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            flex: none;
+            background: inherit;
+            text-align: center;
             font-size: max(1.875cqw, 12px);
             font-weight: 700;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            margin-bottom: max(3cqw, 18px);
+            padding: var(--fc-pad) 0 max(2cqw, 12px);
         }
 
         .fc-face p {
@@ -1022,6 +1060,15 @@
             <button class="btn-secondary" onclick="shuffleQuestions()">Shuffle<span class="hide-mobile">&nbsp;Challenges</span></button>
             <button class="btn-secondary btn-new" onclick="window.location.href = window.location.pathname">New<span class="hide-mobile">&nbsp;Session</span></button>
             <span class="fc-counter" id="fcCounter"></span>
+            <button type="button" id="fcThemeToggle" class="theme-toggle fc-theme" aria-label="Switch to dark mode" title="Switch to dark mode">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+                </svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
             <button type="button" class="btn-secondary btn-flash" id="fcEnter">Flashcard<span class="hide-mobile">&nbsp;Mode</span></button>
         </div>
 
@@ -1096,8 +1143,10 @@
     function applyTheme(theme) {
         document.documentElement.dataset.theme = theme;
         const next = theme === 'dark' ? 'light' : 'dark';
-        themeToggle.setAttribute('aria-label', 'Switch to ' + next + ' mode');
-        themeToggle.setAttribute('title', 'Switch to ' + next + ' mode');
+        document.querySelectorAll('.theme-toggle').forEach(btn => {
+            btn.setAttribute('aria-label', 'Switch to ' + next + ' mode');
+            btn.setAttribute('title', 'Switch to ' + next + ' mode');
+        });
     }
     applyTheme(document.documentElement.dataset.theme || 'light');
 
@@ -1118,6 +1167,9 @@
         window.applyLexforgeFont(fontSelect.value);
         try { localStorage.setItem(FONT_KEY, fontSelect.value); } catch (e) {}
     });
+
+    // Flashcard Mode hides the header, so it carries its own copy of the theme button.
+    document.getElementById('fcThemeToggle').addEventListener('click', () => themeToggle.click());
 
     themeToggle.addEventListener('click', () => {
         const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -1762,18 +1814,30 @@
         return formatParagraphs(str, true);
     }
 
+    // Up to 30 segments; past that each segment covers several cards and fills
+    // in part as you move through them.
+    function progressSegments(n, total) {
+        const segs = Math.min(total, 30);
+        let html = '';
+        for (let i = 0; i < segs; i++) {
+            const start = (i * total) / segs, end = ((i + 1) * total) / segs;
+            const fill = Math.max(0, Math.min(1, (n - start) / (end - start)));
+            html += `<div class="fc-seg"><span style="width:${fill * 100}%"></span></div>`;
+        }
+        return html;
+    }
+
     function isLong(text) {
         return String(text ?? '').trim().split(/\s+/).length > 90;
     }
 
-    function renderFlashcard() {
+    function renderFlashcard(anim) {
         const q = shownData[fcIndex];
         const n = fcIndex + 1, total = shownData.length;
         const hasScenario = String(q.scenario ?? '').trim() !== '';
         let face;
         if (!fcBack) {
             face = `<div class="fc-face fc-front${isLong(q.scenario) ? ' fc-long' : ''}">
-                <span class="fc-label">${hasScenario ? 'Situation' : 'Question'} ${n}</span>
                 ${hasScenario ? `<div class="fc-scenario">${linesOrParagraphs(q.scenario)}</div>` : ''}
                 <p class="fc-question">${q.question ?? ''}</p>
             </div>`;
@@ -1788,7 +1852,6 @@
             const app = String(q.application ?? '').trim();
             const basis = String(q.legal_basis ?? '').trim();
             face = `<div class="fc-face fc-back${isLong(answer + ' ' + app) ? ' fc-long' : ''}">
-                <span class="fc-label">Answer ${n}</span>
                 <p class="fc-verdict">${verdict}</p>
                 ${sentences.length ? `<div class="fc-reasons">${linesOrParagraphs(sentences.join(' '))}</div>` : ''}
                 ${app ? `<p class="fc-app">${app}</p>` : ''}
@@ -1796,9 +1859,9 @@
             </div>`;
         }
         contentDiv.innerHTML = `
-            <div class="fc-progress"><span style="width:${(n / total) * 100}%"></span></div>
+            <div class="fc-progress">${progressSegments(n, total)}</div>
             <div class="fc-card" tabindex="0" role="button" aria-label="${fcBack ? 'Show the question' : 'Show the answer'}">
-                <div class="fc-slide">${face}</div>
+                <div class="fc-slide${anim ? ' fc-' + anim : ''}"><div class="fc-label">${fcBack ? 'Answer' : (hasScenario ? 'Situation' : 'Question')} ${n}</div>${face}</div>
             </div>
             <div class="fc-nav">
                 <button type="button" class="btn-secondary" id="fcPrev" ${n === 1 ? 'disabled' : ''}>&larr; Prev</button>
@@ -1808,6 +1871,14 @@
         `;
         document.getElementById('fcCounter').textContent = `${n} / ${total}`;
         const card = contentDiv.querySelector('.fc-card');
+        if (anim) {
+            // Drop the animation class when it ends, with a timer as a backstop so a
+            // card can never be left mid-turn (e.g. if the tab was in the background).
+            const slide = card.querySelector('.fc-slide');
+            const done = () => slide.classList.remove('fc-' + anim);
+            slide.addEventListener('animationend', done, { once: true });
+            setTimeout(done, 400);
+        }
         let touchX = null, touchY = null, swiped = false;
         card.addEventListener('touchstart', (e) => {
             touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; swiped = false;
@@ -1828,19 +1899,34 @@
         document.getElementById('fcFlipBtn').addEventListener('click', fcFlip);
     }
 
+    let fcTurning = false;
     function fcFlip() {
-        fcBack = !fcBack;
-        renderFlashcard();
+        if (fcTurning) return;
+        const slide = contentDiv.querySelector('.fc-slide');
+        if (!slide || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            fcBack = !fcBack;
+            renderFlashcard();
+            return;
+        }
+        fcTurning = true;
+        slide.classList.remove('fc-flip-in', 'fc-in-next', 'fc-in-prev');
+        slide.classList.add('fc-flip-out');
+        setTimeout(() => {
+            fcBack = !fcBack;
+            renderFlashcard('flip-in');
+            fcTurning = false;
+        }, 120);
     }
 
     // Next and Prev move between questions and always land on the question side;
     // the answer is only ever one flip away.
     function fcStep(dir) {
+        if (fcTurning) return;
         const next = Math.max(0, Math.min(shownData.length - 1, fcIndex + dir));
         if (next === fcIndex && !fcBack) return;
         fcIndex = next;
         fcBack = false;
-        renderFlashcard();
+        renderFlashcard(dir > 0 ? 'in-next' : 'in-prev');
     }
 
     document.addEventListener('keydown', (e) => {
