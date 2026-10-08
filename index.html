@@ -666,6 +666,14 @@
             padding: 4cqw 5.5cqw;
         }
 
+        /* Dark mode: the same page, inverted to light text on the dark card colour. */
+        html[data-theme="dark"] .fc-slide {
+            background: var(--card-bg);
+            color: var(--text-main);
+            box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+            border: 1px solid var(--panel-border);
+        }
+
         .fc-card:focus-visible .fc-slide { box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5); }
 
         /* Portrait phone: a 16:9 page would be too small to read, so the page fills the screen. */
