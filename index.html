@@ -1006,6 +1006,13 @@
             }
             .hide-mobile { display: none; }
             body.flash .container { padding: 10px 12px 12px; }
+            /* Flashcard toolbar on a phone, one row: Back and Shuffle on the left,
+               the theme button in the middle, the counter and font picker on the right. */
+            body.flash .toolbar { flex-wrap: nowrap; position: relative; gap: 6px; }
+            body.flash .toolbar .btn-secondary { padding: 8px 11px; font-size: 0.85rem; }
+            body.flash .fc-theme { position: absolute; left: 50%; transform: translateX(-50%); }
+            body.flash .fc-counter { font-size: 0.85rem; white-space: nowrap; }
+            body.flash .fc-font { width: 88px; font-size: 0.8rem; padding: 5px 4px; }
             .fc-nav .btn-secondary { padding: 10px 12px; }
             .fc-nav .btn-primary { padding: 10px 16px; }
 
