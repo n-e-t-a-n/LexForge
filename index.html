@@ -775,6 +775,12 @@
 
         .fc-face p.fc-app { font-size: max(2cqw, 14px); }
 
+        /* Multi-part questions and answers: (a), (b), (c) each start a new line. */
+        .q-break { display: block; height: 0.6em; }
+        .fc-part { margin-bottom: max(2.25cqw, 12px); }
+        .fc-face .fc-part p { margin-bottom: max(0.8cqw, 4px); }
+        .fc-face .fc-part p.fc-part-verdict { font-weight: 700; }
+
 
         .fc-nav {
             display: grid;
@@ -1842,6 +1848,23 @@
         return html;
     }
 
+    // A question in parts, "(a) ... (b) ... (c) ...", puts each part on its own line.
+    // Line breaks in the JSON also start a new line.
+    function formatQuestion(text) {
+        const str = String(text ?? '').trim();
+        const parts = /^\(a\)\s/.test(str) ? str.split(/\s+(?=\([b-z]\)\s)/) : str.split(/\s*\n\s*/);
+        return parts.filter(Boolean).join('<span class="q-break"></span>');
+    }
+
+    // The first sentence is the verdict; the rest are the reasons. A bare "Yes." or
+    // "No.", with or without a "(a)" in front, stands alone ("No." is otherwise read
+    // as the abbreviation).
+    function verdictAndReasons(text) {
+        const yesNo = text.match(/^(\([a-z]\)\s+)?(Yes|No)\.\s+/);
+        return yesNo ? [yesNo[0].trim(), ...splitSentences(text.slice(yesNo[0].length))]
+                     : splitSentences(text);
+    }
+
     function isLong(text) {
         return String(text ?? '').trim().split(/\s+/).length > 90;
     }
@@ -1854,22 +1877,30 @@
         if (!fcBack) {
             face = `<div class="fc-face fc-front${isLong(q.scenario) ? ' fc-long' : ''}">
                 ${hasScenario ? `<div class="fc-scenario">${linesOrParagraphs(q.scenario)}</div>` : ''}
-                <p class="fc-question">${q.question ?? ''}</p>
+                <p class="fc-question">${formatQuestion(q.question)}</p>
             </div>`;
         } else {
-            // The first sentence of the answer is the verdict; the rest are the reasons.
-            // A bare "Yes." or "No." stands alone ("No." is otherwise read as the abbreviation).
             const answer = String(q.answer ?? '').trim();
-            const yesNo = answer.match(/^(Yes|No)\.\s+/);
-            const sentences = yesNo ? [yesNo[0].trim(), ...splitSentences(answer.slice(yesNo[0].length))]
-                                    : splitSentences(answer);
-            const verdict = sentences.shift() || '';
             const app = String(q.application ?? '').trim();
             const basis = String(q.legal_basis ?? '').trim();
+            const answerLines = answer.split(/\s*\n\s*/).filter(Boolean);
+            let answerHtml;
+            if (answerLines.length > 1) {
+                // A multi-part answer, one line per sub-question: each part gets its own
+                // block, its verdict in bold.
+                answerHtml = answerLines.map(line => {
+                    const [verdict, ...rest] = verdictAndReasons(line);
+                    return `<div class="fc-part"><p class="fc-part-verdict">${verdict}</p>${rest.map(s => `<p>${s}</p>`).join('')}</div>`;
+                }).join('');
+            } else {
+                const sentences = verdictAndReasons(answer);
+                const verdict = sentences.shift() || '';
+                answerHtml = `<p class="fc-verdict">${verdict}</p>
+                ${sentences.length ? `<div class="fc-reasons">${linesOrParagraphs(sentences.join(' '))}</div>` : ''}`;
+            }
             face = `<div class="fc-face fc-back${isLong(answer + ' ' + app) ? ' fc-long' : ''}">
-                <p class="fc-verdict">${verdict}</p>
-                ${sentences.length ? `<div class="fc-reasons">${linesOrParagraphs(sentences.join(' '))}</div>` : ''}
-                ${app ? `<p class="fc-app">${app}</p>` : ''}
+                ${answerHtml}
+                ${app ? app.split(/\s*\n\s*/).filter(Boolean).map(l => `<p class="fc-app">${l}</p>`).join('') : ''}
                 ${basis ? `<div class="fc-basis">${basis}</div>` : ''}
             </div>`;
         }
@@ -1971,7 +2002,7 @@
                 
                 <div class="question-highlight-box">
                     <span class="label-heading" style="color: var(--accent)">Legal Question</span>
-                    <p class="question-text">${q.question}</p>
+                    <p class="question-text">${formatQuestion(q.question)}</p>
                 </div>
 
                 <button class="btn-toggle" onclick="toggleAnswer(this)">Show Suggested Answer</button>
