@@ -1037,8 +1037,8 @@
         <h1>LexForge</h1>
         <div class="subtitle">The Bar Readiness Engine</div>
         <nav class="top-nav" id="topNav">
-            <a href="?" id="navHome">Home</a>
-            <a href="?library=1" id="navLibrary">Library</a>
+            <a href="?" id="navLibrary">Library</a>
+            <a href="?upload=1" id="navUpload">Upload</a>
             <button type="button" id="themeToggle" class="theme-toggle" aria-label="Switch to dark mode" title="Switch to dark mode">
                 <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="4"></circle>
@@ -1057,7 +1057,7 @@
         <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 25px;">Drop your JSON file here or use the button below</p>
         <input type="file" id="fileInput" accept=".json" style="display: none;">
         <label for="fileInput" class="btn-upload">Select JSON File</label>
-        <p class="browse-library-link">or <a href="?library=1">browse the public library</a></p>
+        <p class="browse-library-link">or <a href="?">browse the public library</a></p>
     </div>
 
     <div id="libraryUI" class="hidden">
@@ -1145,7 +1145,7 @@
     const libraryUI = document.getElementById('libraryUI');
     const libraryList = document.getElementById('libraryList');
     const librarySearch = document.getElementById('librarySearch');
-    const navHome = document.getElementById('navHome');
+    const navUpload = document.getElementById('navUpload');
     const navLibrary = document.getElementById('navLibrary');
     const themeToggle = document.getElementById('themeToggle');
     const searchBar = document.getElementById('searchBar');
@@ -1445,11 +1445,14 @@
         }
     }
 
-    function restoreUploadZone() {
+    function showLibraryView() {
         contentDiv.innerHTML = '';
+        dropZone.classList.add('hidden');
         mainUI.classList.add('hidden');
-        libraryUI.classList.add('hidden');
-        dropZone.classList.remove('hidden');
+        libraryUI.classList.remove('hidden');
+        navUpload.classList.remove('active');
+        navLibrary.classList.add('active');
+        loadLibrary();
     }
 
     function showLibrarySkeletons(count) {
@@ -1547,8 +1550,8 @@
         if (!sb) {
             renderLibraryEmpty(
                 "Library unavailable — Supabase isn't configured in this build.",
-                'Back to upload',
-                '?'
+                'Upload a file instead',
+                '?upload=1'
             );
             return;
         }
@@ -1558,7 +1561,7 @@
             renderLibraryEmpty(
                 'Could not load library: ' + error.message,
                 'Retry',
-                '?library=1'
+                '?'
             );
             return;
         }
@@ -1566,7 +1569,7 @@
             renderLibraryEmpty(
                 'No study sets uploaded yet.',
                 'Upload one',
-                '?'
+                '?upload=1'
             );
             return;
         }
@@ -1579,18 +1582,21 @@
     async function loadSharedSet(id) {
         if (!sb) {
             alert("This share link can't be opened — Supabase isn't configured in this build.");
-            restoreUploadZone();
+            window.history.replaceState({}, '', window.location.pathname);
+            showLibraryView();
             return;
         }
         const { data, error } = await sb.rpc('get_study_set', { p_id: id });
         if (error) {
             alert('Could not load shared set: ' + error.message);
-            restoreUploadZone();
+            window.history.replaceState({}, '', window.location.pathname);
+            showLibraryView();
             return;
         }
         if (!data || data.length === 0) {
             alert('No study set found for this link.');
-            restoreUploadZone();
+            window.history.replaceState({}, '', window.location.pathname);
+            showLibraryView();
             return;
         }
         const row = data[0];
@@ -1678,25 +1684,21 @@
         }
     }
 
-    // Route on URL params: ?id=X → shared set, ?library=1 → library, else → upload
+    // Route on URL params: ?id=X → shared set, ?upload=1 → upload page, else → library.
+    // The library is the front page; old ?library=1 links land there too.
     {
         const params = new URLSearchParams(window.location.search);
         const shareId = params.get('id');
-        const showLibrary = params.get('library') === '1';
+        const showUpload = params.get('upload') === '1';
         if (shareId) {
             dropZone.classList.add('hidden');
             mainUI.classList.remove('hidden');
-            navHome.classList.remove('active');
             showSkeletons(3);
             loadSharedSet(shareId);
-        } else if (showLibrary) {
-            dropZone.classList.add('hidden');
-            mainUI.classList.add('hidden');
-            libraryUI.classList.remove('hidden');
-            navLibrary.classList.add('active');
-            loadLibrary();
+        } else if (showUpload) {
+            navUpload.classList.add('active');
         } else {
-            navHome.classList.add('active');
+            showLibraryView();
         }
     }
 
